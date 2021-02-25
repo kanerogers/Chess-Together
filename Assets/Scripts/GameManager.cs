@@ -72,6 +72,7 @@ public class GameManager : MonoBehaviour {
     }
 
 
+
     public void StopFirebase() {
         code = 0;
         if (readyObserver != null) readyObserver.Stop();
