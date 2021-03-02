@@ -80,7 +80,48 @@ namespace Tests {
             Assert.IsTrue(board.Move(6, 1, 4, 1));
             Assert.IsTrue(board.Move(4, 1, 3, 1));
             Assert.IsTrue(board.Move(3, 1, 2, 1));
-            Assert.IsFalse(board.Move(2, 1, 1, 1));
+
+        }
+
+        [Test]
+        public void TestEnPassant() {
+            // En passant
+            var lazy = true;
+
+            // FIDE 3.7d
+            // A pawn attacking a square crossed by an opponent’s pawn which has advanced two
+            // squares in one move from its original square may capture this opponent’s pawn as
+            // though the latter had been moved only one square. 
+            var board = new ChessBoard();
+
+            // White moves forward
+            Assert.IsTrue(board.Move(6, 0, 4, 0, lazy));
+            Assert.IsTrue(board.Move(4, 0, 3, 0, lazy));
+
+            // Black advances two squares
+            Assert.IsTrue(board.Move(1, 1, 3, 1, lazy));
+
+            // En passant capture
+            Assert.IsTrue(board.Move(3, 0, 2, 1, lazy));
+
+            // This capture is only legal on the move following this advance..
+            board = new ChessBoard();
+
+            // White moves forward
+            Assert.IsTrue(board.Move(6, 0, 4, 0, lazy));
+
+            // Black advances two squares
+            Logger.Log($"Moving from 1,1 to 3,1");
+            Assert.IsTrue(board.Move(1, 1, 3, 1, lazy));
+            Logger.Log($"Done");
+
+            // White moves forward again - invalidating en passant
+            Logger.Log($"Moving from 4,0 to 3,0");
+            Assert.IsTrue(board.Move(4, 0, 3, 0, lazy));
+            Logger.Log($"Done");
+
+            // En passant not possible.
+            Assert.IsFalse(board.Move(3, 0, 2, 1, lazy));
         }
 
         // FIDE 3.5 "[...] the bishop [...] may not move over any intervening pieces."

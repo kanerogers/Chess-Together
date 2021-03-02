@@ -10,6 +10,7 @@ public class ChessBoard {
     public int Turn;
     public Stack<(Move, ChessPiece)> UndoStack = new Stack<(Move, ChessPiece)>();
     public Dictionary<ChessPiece.EColour, BoardState> State = new Dictionary<ChessPiece.EColour, BoardState>();
+    public Dictionary<(int, int), Boolean> EnPassantState = new Dictionary<(int, int), bool>();
 
     #region Public
     public ChessBoard() {
@@ -93,6 +94,7 @@ public class ChessBoard {
             }
         }
 
+
         // Need to move the rook as well..
         if (isCastling) {
             MoveRookForCastling(toRow, originalColumn);
@@ -105,6 +107,29 @@ public class ChessBoard {
         var removedPiece = Pieces[toRow, toColumn];
         UndoStack.Push((lastMove, removedPiece));
 
+        // Update en-passant state
+        // Invalidate previous state
+        foreach (var s in EnPassantState) {
+            var (row, column) = s.Key;
+            var pawn = Pieces[row, column];
+            if (pawn != null) {
+                var p = (Pawn)pawn;
+                Logger.Log($"Setting {pawn} canbecaptured to false");
+                p.CanBeCapturedByEnpassant = false;
+            }
+        }
+
+        EnPassantState.Clear();
+
+        // Set new state
+        if (piece.Name == ChessPiece.EName.Pawn) {
+            var pawn = (Pawn)piece;
+            if (pawn.CanBeCapturedByEnpassant) {
+                Logger.Log($"Setting state - Pawn at {toRow},{toColumn} canbecaptured to true");
+                EnPassantState[(toRow, toColumn)] = true;
+            }
+        }
+
         // Update the piece's bookkeeping.
         piece.Column = toColumn;
         piece.Row = toRow;
@@ -112,6 +137,7 @@ public class ChessBoard {
         // Update our own bookkeeping.
         Pieces[toRow, toColumn] = piece;
         Pieces[fromRow, fromColumn] = null;
+
 
         // Update the state etc.
         if (!lazy) {
@@ -149,6 +175,8 @@ public class ChessBoard {
 
             UndoCastle(toRow, toColumn);
         }
+
+        // If this was a pawn, we need to re-set its 
 
         // If this move was the first time the piece moved, then reset its HasMoved flag
         if (lastMove.firstMoved) {
@@ -282,7 +310,6 @@ public class ChessBoard {
                         ValidMoves[colour].Add(move);
                         move = new Move(piece.Row, piece.Column, toRow, toColumn, ChessPiece.EName.Knight);
                         ValidMoves[colour].Add(move);
-                        Logger.Log("Promotion", $"Added {move} to ValidMoves");
                     } else {
                         move = new Move(piece.Row, piece.Column, toRow, toColumn, score);
                         ValidMoves[colour].Add(move);
