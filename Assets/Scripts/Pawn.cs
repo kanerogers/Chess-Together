@@ -1,5 +1,7 @@
 using System;
 public class Pawn : ChessPiece {
+    public bool CanBeCapturedByEnpassant;
+
     public Pawn(EColour colour, int row, int column) {
         Colour = colour;
         Name = EName.Pawn;
@@ -41,9 +43,13 @@ public class Pawn : ChessPiece {
 
             // Check if there is a piece on this diagonal
             if (pieceOnSquare != null) {
-                Logger.Log("Pawn", $"Pawn can move diagonally to {toRow},{toColumn} as there is a piece on that square: {pieceOnSquare}");
+                // Logger.Log("Pawn", $"Pawn can move diagonally to {toRow},{toColumn} as there is a piece on that square: {pieceOnSquare}");
+                // Piece has moved, CanBeCapturedByEnpassant is now invalidated.
                 return true;
             } else {
+                // Check if this is en passant
+                if (IsEnPassant(toRow, toColumn, pieces)) return true;
+
                 // Debug.Log($"Pawn cannot move to {toRow},{toColumn} as there is no piece on that square");
                 return false;
             }
@@ -70,11 +76,42 @@ public class Pawn : ChessPiece {
                 // Debug.Log($"Pawn cannot move to {toRow},{toColumn} as there is a piece in the way.");
                 return false;
             }
+
+            // Set the CanBeCapturedByEnPassant flag
+            Logger.Log($"Pawn at {toRow},{toColumn} canbecaptured = true");
+            CanBeCapturedByEnpassant = true;
         }
 
-        // TODO: FIDE 3.7e - Promotion
+        return true;
+    }
+
+    // FIDE 3.7d
+    // A pawn attacking a square crossed by an opponent’s pawn which has advanced two
+    // squares in one move from its original square may capture this opponent’s pawn as
+    // though the latter had been moved only one square. 
+    private bool IsEnPassant(int toRow, int toColumn, ChessPiece[,] pieces) {
+        // First, find the EnPassant square.
+        var enPassantRow = GetEnPassantRow(toRow);
+        Logger.Log("EP", $"Enpassant square: {enPassantRow},{toColumn}");
+        var piece = pieces[enPassantRow, toColumn];
+        if (piece == null) return false;
+
+        if (piece.Name != ChessPiece.EName.Pawn) return false;
+
+        var pawn = (Pawn)piece;
+        // "..This capture is only legal on the move following this advance"
+        if (!pawn.CanBeCapturedByEnpassant) {
+            Logger.Log("EP", $"Unable to capture pawn {pawn} - can be captured is false");
+            return false;
+        }
 
         return true;
+    }
+
+    int GetEnPassantRow(int toRow) {
+        var backwardsOneSquare = IsBlack() ? 1 : -1;
+        var enPassantRow = toRow - backwardsOneSquare;
+        return enPassantRow;
     }
 
     bool OnStartingRow() {
