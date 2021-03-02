@@ -14,6 +14,11 @@ public class PGNParser {
     static char QUEEN = 'Q';
     static char KNIGHT = 'N';
     static char ROOK = 'R';
+    static char CAPTURE = 'x';
+    static char CHECK = '+';
+    static string PROMOTION = "=";
+    static string QUEENSIDE_CASTLE = "O-O-O";
+    static string KINGSIDE_CASTLE = "O-O";
     static Dictionary<char, int> RANK_TO_ROW = new Dictionary<char, int>() {
         {'1', 7},
         {'2', 6},
@@ -25,32 +30,48 @@ public class PGNParser {
         {'8', 0},
     };
     static Dictionary<char, int> FILE_TO_COLUMN = new Dictionary<char, int>() {
-        {'a', 7},
-        {'b', 6},
-        {'c', 5},
-        {'d', 4},
-        {'e', 3},
-        {'f', 2},
-        {'g', 1},
-        {'h', 0},
+        {'a', 0},
+        {'b', 1},
+        {'c', 2},
+        {'d', 3},
+        {'e', 4},
+        {'f', 5},
+        {'g', 6},
+        {'h', 7},
     };
-    Regex moveNumberRegex = new Regex(@"(^|\s)\d+\.", RegexOptions.Compiled);
+    static Regex moveNumberRegex = new Regex(@"(^|\s)\d+(\.|-|\/)", RegexOptions.Compiled);
+    static Regex scoreRegex = new Regex(@"\d\-\d", RegexOptions.Compiled);
+    int lineNumber = 0;
 
     public List<Move> GetMoves() {
+        var inHeader = true;
+        var games = new List<List<Move>>();
         var moves = new List<Move>();
-        char[] MOVES_START = new char[] { '1', '.' };
 
         // First, we need to skip through the header stuff and get to the moves.
         while (true) {
+            lineNumber++;
             var line = streamReader.ReadLine();
+            if (line == null) break;
             if (line.StartsWith("[") || line == "") {
-                continue;
+                if (inHeader) continue;
+                else {
+                    inHeader = true;
+                    board = new ChessBoard();
+                    games.Add(moves);
+                    moves = new List<Move>();
+                }
+            } else {
+                inHeader = false;
+
+                try {
+                    parseLine(line, moves);
+                } catch (System.Exception e) {
+                    Logger.Log("ERROR", $"Error parsing on line {lineNumber}: {line}");
+                    throw e;
+                }
             }
 
-            parseLine(line, moves);
-
-
-            break;
         }
 
         return moves;
@@ -70,24 +91,42 @@ public class PGNParser {
             positions.Add((lastEnd + l, index, length));
         }
 
+        if (!scoreRegex.IsMatch(line)) {
+            var (_, le, lastLength) = positions[positions.Count - 1];
+            positions.Add((le + lastLength, line.Length, 0));
+        }
+
+
         foreach (var (i, l, _) in positions) {
             if (i == 0) continue;
-            var m = line.Substring(i, (l - i) + 1);
+            var m = line.Substring(i, (l - i));
             var split = m.Split(' ');
             var whiteMoveString = split[0];
-            var blackMoveString = split[1];
+            string blackMoveString;
+            blackMoveString = split[1];
 
             var whiteMove = parseMoveString(whiteMoveString, ChessPiece.EColour.White);
             if (!board.Move(whiteMove)) throw new System.Exception($"Attempted to make invalid move: {whiteMove}");
             moves.Add(whiteMove);
 
-            var blackMove = parseMoveString(whiteMoveString, ChessPiece.EColour.Black);
+            // If white won, then black's final move will be empty.
+            if (blackMoveString == "") return;
+
+            var blackMove = parseMoveString(blackMoveString, ChessPiece.EColour.Black);
             if (!board.Move(blackMove)) throw new System.Exception($"Attempted to make invalid move: {blackMove}");
             moves.Add(blackMove);
         }
     }
 
     public Move parseMoveString(string moveString, ChessPiece.EColour colour) {
+        // If this is a Castle, then handle that
+        if (moveString == QUEENSIDE_CASTLE) return parseQueensideCastle(moveString, colour);
+        if (moveString == KINGSIDE_CASTLE) return parseKingsideCastle(moveString, colour);
+
+        // If this is a promotion, handle that
+        if (moveString.Contains(PROMOTION)) return parsePromotion(moveString, colour);
+
+
         // First, find the piece's name based off the move string
         var (pieceName, coordinateString) = parseName(moveString);
 
@@ -102,19 +141,58 @@ public class PGNParser {
         // If moves.Count == 1, return that move
         if (moveCandidates.Count == 1) return moveCandidates[0];
 
-        // Else, look at the piece on startRow, startColumn and check if its name is pieceName, or use
-        // startRow or startColumn provided in the moveString.
+        // Disambiguate the move.
         foreach (var candidate in moveCandidates) {
+            // If we got a startRow or startColumn provided in the moveString, use that.
             var (row, column) = (candidate.FromRow, candidate.FromColumn);
             var piece = board.Pieces[row, column];
-            if (piece.Name == pieceName) return candidate;
+            var name = piece.Name;
+
+            // Try most specific first.
+            if (fromRow == row && fromColumn == column && pieceName == name) return candidate;
+            if (fromRow == row && pieceName == name) return candidate;
+            if (fromColumn == column && pieceName == name) return candidate;
+
+            // If there is no fromRow or fromColumn, then we're guaranteed the piece name will be unique.
+            if (fromRow == -1 && fromColumn == -1) {
+                if (name == pieceName) return candidate;
+            }
         }
 
-        return null;
+        throw new System.Exception($"No move found matching {moveString}");
+    }
+
+    private Move parsePromotion(string moveString, ChessPiece.EColour colour) {
+        var split = moveString.Split('=');
+        var coordinates = split[0];
+        var p = split[1];
+        var (pieceName, _) = parseName($"{p} "); // needs to be done to trick parseName
+
+        var (fromRow, fromColumn, toRow, toColumn) = parseCoordinates(coordinates);
+        return board.ValidMoves[colour].Find(m => {
+            if (fromColumn == -1) return m.PieceToPromoteTo == pieceName && m.ToColumn == toColumn;
+            else return m.PieceToPromoteTo == pieceName && m.ToColumn == toColumn && m.FromColumn == fromColumn;
+        });
+    }
+
+    private Move parseKingsideCastle(string moveString, ChessPiece.EColour colour) {
+        var row = colour == ChessPiece.EColour.Black ? 0 : 7;
+        return board.ValidMoves[colour].Find(m => m.FromRow == row && m.FromColumn == 4 && m.ToColumn == 7 && m.ToRow == row);
+
+    }
+
+    private Move parseQueensideCastle(string moveString, ChessPiece.EColour colour) {
+        var row = colour == ChessPiece.EColour.Black ? 0 : 7;
+        return board.ValidMoves[colour].Find(m => m.FromRow == row && m.FromColumn == 4 && m.ToColumn == 0 && m.ToRow == row);
     }
 
     private (int, int, int, int) parseCoordinates(string coordinateString) {
         int fromRow = -1, fromColumn = -1, toRow, toColumn;
+        // Get rid of noise
+        coordinateString = coordinateString.Replace(CHECK.ToString(), "");
+        coordinateString = coordinateString.Replace(CAPTURE.ToString(), "");
+
+        // Move with no origin rank OR file
         if (coordinateString.Length == 2) {
             var rank = coordinateString[1]; // row
             var file = coordinateString[0]; // column
@@ -123,7 +201,34 @@ public class PGNParser {
             return (fromRow, fromColumn, toRow, toColumn);
         }
 
-        Logger.Log("PGNParser", $"Found unknown string {coordinateString}");
+        // Move specifying origin rank OR file
+        if (coordinateString.Length == 3) {
+            char rank, file;
+            var firstChar = coordinateString[0];
+            if (RANK_TO_ROW.ContainsKey(firstChar)) fromRow = RANK_TO_ROW[firstChar];
+            if (FILE_TO_COLUMN.ContainsKey(firstChar)) fromColumn = FILE_TO_COLUMN[firstChar];
+
+            rank = coordinateString[2]; // row
+            file = coordinateString[1]; // column
+            toRow = RANK_TO_ROW[rank];
+            toColumn = FILE_TO_COLUMN[file];
+            return (fromRow, fromColumn, toRow, toColumn);
+        }
+
+        // Move specifying origin rank and file
+        if (coordinateString.Length == 4) {
+            var fromRank = coordinateString[1]; // row
+            var fromFile = coordinateString[0]; // column
+            fromRow = RANK_TO_ROW[fromRank];
+            fromColumn = FILE_TO_COLUMN[fromFile];
+
+            var rank = coordinateString[3]; // row
+            var file = coordinateString[2]; // column
+            toRow = RANK_TO_ROW[rank];
+            toColumn = FILE_TO_COLUMN[file];
+
+            return (fromRow, fromColumn, toRow, toColumn);
+        }
 
         throw new System.NotImplementedException();
     }
@@ -139,7 +244,6 @@ public class PGNParser {
         if (c == QUEEN) return (ChessPiece.EName.Queen, coordinateString);
         if (c == ROOK) return (ChessPiece.EName.Rook, coordinateString);
 
-        // TODO: Castling happens, need to deal with that.
-        throw new System.Exception($"Invalid character: {c}");
+        throw new System.Exception($"Unable to parse invalid name string: {moveString}");
     }
 }
