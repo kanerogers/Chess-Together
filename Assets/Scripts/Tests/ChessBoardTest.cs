@@ -698,7 +698,7 @@ namespace Tests {
             // "Castling is prevented temporarily:
             // (a) if the square on which the king stands..
             board.CreatePiece(ChessPiece.EName.Rook, 1, 4, ChessPiece.EColour.White);
-            board.CheckBoard();
+            board.UpdateBoardState();
             Assert.IsFalse(board.Move(blackQueenSideCastle));
 
             // ..or the square which it must cross..
@@ -766,7 +766,7 @@ namespace Tests {
             board.CreatePiece(ChessPiece.EName.Bishop, 5, 6, ChessPiece.EColour.White);
             board.CreatePiece(ChessPiece.EName.King, 6, 2, ChessPiece.EColour.White);
             board.CreatePiece(ChessPiece.EName.Pawn, 7, 1, ChessPiece.EColour.White);
-            board.CheckBoard();
+            board.UpdateBoardState();
 
             Assert.AreEqual(board.State[ChessPiece.EColour.Black], ChessBoard.BoardState.Stalemate);
         }
@@ -810,7 +810,7 @@ namespace Tests {
             Assert.AreEqual(board.Pieces[1, 0].Row, 1);
             Assert.AreEqual(board.Pieces[1, 0].Column, 0);
             Assert.AreEqual(board.Turn, 0);
-            board.CheckBoard();
+            board.UpdateBoardState();
 
             bool hasBishopPromotion = false;
             bool hasQueenPromotion = false;

@@ -33,6 +33,34 @@ public abstract class ChessPiece {
         return true;
     }
 
+    public virtual bool CheckMove(ChessPiece[,] pieces, Move move) {
+        var (row, column, _, _) = move.ToCoordinates();
+
+        if (row == Row && column == Column) {
+            return false;
+        }
+
+        if (row > 7 || row < 0) {
+            return false;
+        }
+        if (column > 7 || column < 0) {
+            // Logger.Log("Moves", "Invalid column " + column);
+            return false;
+        }
+
+        ChessPiece piece = pieces[row, column];
+
+        if (piece != null) {
+            // FIDE 3.1 It is not permitted to move a piece to a square occupied by a piece of the same colour.
+            if (piece.Colour == Colour) {
+                // Logger.Log("Moves", $"Unable to move {Name} to {row},{column}. This space is occupied by {piece}");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public abstract int GetScore();
 
     public bool HasPiecesOnInterveningSquares(ChessPiece[,] pieces, int toRow, int toColumn) {
