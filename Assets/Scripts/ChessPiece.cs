@@ -8,26 +8,27 @@ public abstract class ChessPiece {
     public bool HasMoved;
 
     public virtual bool CheckMove(ChessPiece[,] pieces, Move move) {
-        var (row, column, _, _) = move.ToCoordinates();
+        var (_, _, toRow, toColumn) = move.ToCoordinates();
 
-        if (row == Row && column == Column) {
+        if (toRow == Row && toColumn == Column) {
+            Logger.Log("Moves", $"Move {move} is invalid. Can't move to same square");
             return false;
         }
 
-        if (row > 7 || row < 0) {
+        if (toRow > 7 || toRow < 0) {
             return false;
         }
-        if (column > 7 || column < 0) {
-            // Logger.Log("Moves", "Invalid column " + column);
+        if (toColumn > 7 || toColumn < 0) {
+            Logger.Log("Moves", $"Move {move} is invalid. Invalid column {toColumn}");
             return false;
         }
 
-        ChessPiece piece = pieces[row, column];
+        ChessPiece piece = pieces[toRow, toColumn];
 
         if (piece != null) {
             // FIDE 3.1 It is not permitted to move a piece to a square occupied by a piece of the same colour.
             if (piece.Colour == Colour) {
-                // Logger.Log("Moves", $"Unable to move {Name} to {row},{column}. This space is occupied by {piece}");
+                Logger.Log("Moves", $"Move {move} is invalid. {piece} is the same colour as {this}");
                 return false;
             }
         }
@@ -87,6 +88,16 @@ public abstract class ChessPiece {
         var b = Math.Abs(toColumn - Column);
         return a == b;
     }
+
+    public void UpdateState(Move move) {
+        var (_, _, toRow, toColumn) = move.ToCoordinates();
+        Logger.Log($"Updating {this}..");
+        Row = toRow;
+        Column = toColumn;
+        HasMoved = true;
+        Logger.Log($"Finished updating {this}");
+    }
+
     public bool IsRankOrFile(int toRow, int toColumn) {
         return (Row == toRow || Column == toColumn);
     }
