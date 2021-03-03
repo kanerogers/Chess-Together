@@ -85,4 +85,5 @@ public class Move : IEquatable<Move> {
         return (move.ToRow == ToRow && move.ToColumn == ToColumn && move.FromRow == FromRow && move.FromColumn == FromColumn);
     }
 
+    public bool IsPromotion() => PieceToPromoteTo != ChessPiece.EName.None;
 }

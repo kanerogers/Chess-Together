@@ -14,11 +14,7 @@ public class ChessBoard {
 
     #region Public
     public ChessBoard() {
-        Inst = this;
-        SetUpBoard();
-        ValidMoves[ChessPiece.EColour.Black] = new List<Move>();
-        ValidMoves[ChessPiece.EColour.White] = new List<Move>();
-        // UpdateBoardState();
+        new ChessBoard(false);
     }
 
     public ChessBoard(bool emptyBoard) {
@@ -76,10 +72,11 @@ public class ChessBoard {
     }
 
     private void UpdateState(Move move) {
-        var (_, _, toRow, toColumn) = move.ToCoordinates();
+        var (fromRow, fromColumn, toRow, toColumn) = move.ToCoordinates();
+        var piece = Pieces[fromRow, fromColumn];
 
         // Before we can update the state, we need to stash the move away.
-        var removedPiece = Pieces[toRow, toColumn];
+        var removedPiece = move.IsPromotion() ? piece : Pieces[toRow, toColumn];
         UndoStack.Push((move, removedPiece));
 
         // Update state.
@@ -269,7 +266,7 @@ public class ChessBoard {
     }
 
     private void UndoPiecesState(Move lastMove, ChessPiece removedPiece) {
-        if (lastMove.PieceToPromoteTo != ChessPiece.EName.None) {
+        if (lastMove.IsPromotion()) {
             UndoPromotion(lastMove, removedPiece);
             return;
         }
@@ -290,6 +287,7 @@ public class ChessBoard {
         // If a piece was removed, put it back.
         Pieces[toRow, toColumn] = removedPiece;
     }
+
 
     private void UpdateTurn(Move move) {
         // TODO: Set turn in move?
@@ -336,17 +334,13 @@ public class ChessBoard {
     private void PromotePiece(Move move) {
         var (fromRow, fromColumn, toRow, toColumn) = move.ToCoordinates();
         var pawn = Pieces[fromRow, fromColumn];
+        if (pawn == null) throw new Exception($"Invalid promotion - no pawn found at {fromRow},{fromColumn}. Board state: {this}");
 
-        // Phew. Okay, now we can do the promotion.
         // Kill the pawn.
         Pieces[fromRow, fromColumn] = null;
 
         // Create the piece.
         CreatePiece(move.PieceToPromoteTo, toRow, toColumn, pawn.Colour);
-
-        // Modify the undo stack so that it's actually the *pawn* that's the removed piece.
-        var (_, piece) = UndoStack.Peek();
-        piece = pawn;
     }
 
     void SetUpBoard() {
@@ -498,6 +492,7 @@ public class ChessBoard {
         // Done-ski desu~~
         Turn--;
     }
+
     void ClearEnPassantState() {
         foreach (var s in EnPassantState) {
             var (row, column) = s.Key;
