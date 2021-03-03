@@ -36,6 +36,14 @@ public abstract class ChessPiece {
         return true;
     }
 
+    public virtual void Undo(Move lastMove) {
+        var (fromRow, fromColumn, _, _) = lastMove.ToCoordinates();
+        Row = fromRow;
+        Column = fromColumn;
+
+        if (lastMove.firstMoved) HasMoved = false;
+    }
+
     public abstract int GetScore();
 
     public bool HasPiecesOnInterveningSquares(ChessPiece[,] pieces, int toRow, int toColumn) {
