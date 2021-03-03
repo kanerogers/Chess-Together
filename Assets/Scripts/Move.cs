@@ -12,6 +12,7 @@ public class Move : IEquatable<Move> {
     public bool isCastling;
     public bool firstMoved;
     public ChessPiece.EName PieceToPromoteTo;
+    public PreviousEnPassantState previousEnPassantState;
 
     public Move(int fromRow, int fromColumn, int toRow, int toColumn) {
         FromRow = fromRow;
@@ -79,4 +80,5 @@ public class Move : IEquatable<Move> {
         if (move == null) return false;
         return (move.ToRow == ToRow && move.ToColumn == ToColumn && move.FromRow == FromRow && move.FromColumn == FromColumn);
     }
+
 }
