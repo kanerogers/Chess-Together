@@ -18,6 +18,7 @@ public class ChessBoard {
     }
 
     public ChessBoard(bool emptyBoard) {
+        Turn = 0;
         Inst = this;
         ValidMoves[ChessPiece.EColour.Black] = new List<Move>();
         ValidMoves[ChessPiece.EColour.White] = new List<Move>();
@@ -103,7 +104,6 @@ public class ChessBoard {
 
         return validMoves.Contains(move);
     }
-
 
     public Move GetLastMove() {
         var (move, _) = UndoStack.Peek();
@@ -292,10 +292,12 @@ public class ChessBoard {
     private void UpdateTurn(Move move) {
         // TODO: Set turn in move?
         Turn++;
+        Logger.Log($"Turn is now {Turn}");
     }
 
     private void UndoTurn(Move lastMove) {
         Turn--;
+        Logger.Log($"Turn is now {Turn}");
     }
 
     private void UpdateEnPassantState(Move move) {
@@ -488,9 +490,6 @@ public class ChessBoard {
         // Remove the "promotion" piece.
         Pieces[toRow, toColumn] = null;
         Pieces[fromRow, fromColumn] = pawn;
-
-        // Done-ski desu~~
-        Turn--;
     }
 
     void ClearEnPassantState() {
