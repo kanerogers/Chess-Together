@@ -44,7 +44,10 @@ public class ChessBoard {
         if (!IsValid(move, isKingInCheckTest)) return false;
 
         // Move is valid! Update state.
-        UpdateState(move, isKingInCheckTest);
+        UpdateState(move);
+
+        // Check the status of the board.
+        if (!isKingInCheckTest) UpdateBoardStatus();
 
         // Done!
         return true;
@@ -56,13 +59,13 @@ public class ChessBoard {
 
         // Does the piece exist?
         if (piece == null) {
-            Logger.Log("MOVES", $"Piece at {fromRow},{fromColumn} does not exist.");
+            // Logger.Log("MOVES", $"Piece at {fromRow},{fromColumn} does not exist.");
             return false;
         }
 
         // Is this a valid move?
         if (!piece.CheckMove(Pieces, move)) {
-            Logger.Log("MOVES", $"Move {move} is invalid.");
+            // Logger.Log("MOVES", $"Move {move} is invalid.");
             return false;
         }
 
@@ -72,32 +75,29 @@ public class ChessBoard {
         return true;
     }
 
-    private void UpdateState(Move move, bool isKingInCheckTest) {
+    private void UpdateState(Move move) {
         var (_, _, toRow, toColumn) = move.ToCoordinates();
 
         // Before we can update the state, we need to stash the move away.
         var removedPiece = Pieces[toRow, toColumn];
         UndoStack.Push((move, removedPiece));
 
-        Logger.Log($"Updating state for {move} - isKingInCheckTest {isKingInCheckTest}");
-
         // Update state.
         UpdatePiecesState(move);
         UpdateTurn(move);
-        if (!isKingInCheckTest) UpdateBoardStatus();
         UpdateEnPassantState(move);
 
-        Logger.Log($"..done!");
+        // Logger.Log($"..done!");
     }
 
     public void Undo(bool isKingInCheckTest = false) {
         var (lastMove, removedPiece) = UndoStack.Pop();
-        Logger.Log("UNDO", $"Undoing {lastMove}");
+        // Logger.Log("UNDO", $"Undoing {lastMove}");
 
         UndoPiecesState(lastMove, removedPiece);
         UndoTurn(lastMove);
         UndoEnPassantState(lastMove);
-        if (!isKingInCheckTest) UpdateBoardStatus();
+        // if (!isKingInCheckTest) UpdateBoardStatus();
     }
 
     public bool IsValidMove(ChessPiece piece, int toRow, int toColumn) {
@@ -151,7 +151,7 @@ public class ChessBoard {
     // - Returns whether the player of a given colour is in checkmate
     // - Evaluates all valid moves for the player
     public void UpdateBoardStatus() {
-        Logger.Log("BOARD STATE", "Updating board state.");
+        // Logger.Log("BOARD STATE", "Updating board state.");
         // Take a deep breath..
         State[ChessPiece.EColour.Black] = BoardStatus.NotInCheck;
         State[ChessPiece.EColour.White] = BoardStatus.NotInCheck;
@@ -179,7 +179,7 @@ public class ChessBoard {
                 for (int toColumn = 0; toColumn < 8; toColumn++) {
                     var move = new Move(piece.Row, piece.Column, toRow, toColumn);
 
-                    Logger.Log("BOARD STATE", $"Evaluating move {move}");
+                    // Logger.Log("BOARD STATE", $"Evaluating move {move}");
                     if (!piece.CheckMove(Pieces, move)) continue;
                     if (WouldPutKingInCheck(move)) continue;
 
@@ -312,13 +312,13 @@ public class ChessBoard {
         if (previousState != null) {
             var (row, column) = (previousState.Row, previousState.Column);
             var canBeCaptured = previousState.CanBeCaptured;
-            Logger.Log($"Restoring EnPassant state for {row},{column} = {canBeCaptured}");
+            // Logger.Log($"Restoring EnPassant state for {row},{column} = {canBeCaptured}");
             EnPassantState[(row, column)] = canBeCaptured;
         }
     }
 
     private bool WouldPutKingInCheck(Move move) {
-        Logger.Log("BOARD STATE", $"Evlauting if {move} would put King in check.");
+        // Logger.Log("BOARD STATE", $"Evlauting if {move} would put King in check.");
         var (fromRow, fromColumn, _, _) = move.ToCoordinates();
         var piece = Pieces[fromRow, fromColumn];
         if (piece == null) throw new Exception($"Error evaluating {move} - piece is null!");
@@ -502,7 +502,7 @@ public class ChessBoard {
         foreach (var s in EnPassantState) {
             var (row, column) = s.Key;
             var pawn = Pieces[row, column];
-            Logger.Log($"Setting new EnPassant state for {row},{column} = false");
+            // Logger.Log($"Setting new EnPassant state for {row},{column} = false");
             if (pawn != null) {
                 if (pawn.Name != ChessPiece.EName.Pawn) {
                     throw new Exception($"Invalid enpassant state - {pawn}");

@@ -136,7 +136,7 @@ public static class AIManager {
     }
 
     static int EvaluateMove(ChessBoard board, Move move, ChessPiece.EColour us, ChessPiece.EColour them, ChessPiece.EColour canMove) {
-        Logger.Log("AI", $"AI Manager evaluating {move}");
+        // Logger.Log("AI", $"AI Manager evaluating {move}");
         if (!board.Move(move)) {
             throw new System.Exception($"Attempted to make invalid move {move} with board state {board}");
         }
