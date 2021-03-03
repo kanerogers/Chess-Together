@@ -38,18 +38,21 @@ public class ChessBoard {
         // Is this move valid?
         var (fromRow, fromColumn, toRow, toColumn) = move.ToCoordinates();
         var piece = Pieces[fromRow, fromColumn];
+        Logger.Log($"hello");
 
         // Does the piece exist?
         if (piece == null) {
             Logger.Log("MOVES", $"Piece at {fromRow},{fromColumn} does not exist.");
             return false;
         }
+        Logger.Log($"hello");
 
         // Is this a valid move?
         if (!piece.CheckMove(Pieces, move)) {
             Logger.Log("MOVES", $"Move {move} is invalid.");
             return false;
         }
+        Logger.Log($"hello");
 
         // Would this put us in check?
         if (!lazy) if (WouldPutKingInCheck(move)) return false;
@@ -60,11 +63,16 @@ public class ChessBoard {
         var removedPiece = Pieces[toRow, toColumn];
         UndoStack.Push((move, removedPiece));
 
+        Logger.Log($"Updating state for {move}");
+
         // Update state.
         UpdatePiecesState(move);            // Updates Pieces[]
         UpdateTurn(move);                   // Updates Turn 
         if (!lazy) UpdateBoardState();      // Updates BoardState and ValidMoves 
         UpdateEnPassantState(move);         // Updates EnPassantState
+        piece.UpdateState(move);
+
+        Logger.Log($"..done!");
 
         // Done!
         return true;
