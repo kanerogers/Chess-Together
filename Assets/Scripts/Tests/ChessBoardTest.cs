@@ -446,8 +446,8 @@ namespace Tests {
                 Assert.IsTrue(board.Move(7, 5, 4, 2));
                 Assert.IsTrue(board.Move(7, 3, 5, 5));
                 Assert.IsTrue(board.Move(5, 5, 1, 5));
-                Assert.AreEqual(board.State[ChessPiece.EColour.Black], ChessBoard.BoardState.Checkmate);
-                Assert.AreEqual(board.State[ChessPiece.EColour.White], ChessBoard.BoardState.NotInCheck);
+                Assert.AreEqual(board.State[ChessPiece.EColour.Black], ChessBoard.BoardStatus.Checkmate);
+                Assert.AreEqual(board.State[ChessPiece.EColour.White], ChessBoard.BoardStatus.NotInCheck);
             }
 
             {
@@ -459,13 +459,13 @@ namespace Tests {
                 Assert.IsTrue(board.Move(7, 5, 4, 2));
                 Assert.IsTrue(board.Move(7, 3, 5, 5));
                 Assert.IsTrue(board.Move(5, 5, 1, 5));
-                Assert.AreEqual(board.State[ChessPiece.EColour.Black], ChessBoard.BoardState.Check);
-                Assert.AreEqual(board.State[ChessPiece.EColour.White], ChessBoard.BoardState.NotInCheck);
+                Assert.AreEqual(board.State[ChessPiece.EColour.Black], ChessBoard.BoardStatus.Check);
+                Assert.AreEqual(board.State[ChessPiece.EColour.White], ChessBoard.BoardStatus.NotInCheck);
 
                 // Let the King move out of check
                 Assert.IsTrue(board.Move(0, 4, 1, 3));
-                Assert.AreEqual(board.State[ChessPiece.EColour.Black], ChessBoard.BoardState.NotInCheck);
-                Assert.AreEqual(board.State[ChessPiece.EColour.White], ChessBoard.BoardState.NotInCheck);
+                Assert.AreEqual(board.State[ChessPiece.EColour.Black], ChessBoard.BoardStatus.NotInCheck);
+                Assert.AreEqual(board.State[ChessPiece.EColour.White], ChessBoard.BoardStatus.NotInCheck);
             }
         }
 
@@ -698,7 +698,7 @@ namespace Tests {
             // "Castling is prevented temporarily:
             // (a) if the square on which the king stands..
             board.CreatePiece(ChessPiece.EName.Rook, 1, 4, ChessPiece.EColour.White);
-            board.UpdateBoardState();
+            board.UpdateBoardStatus();
             Assert.IsFalse(board.Move(blackQueenSideCastle));
 
             // ..or the square which it must cross..
@@ -766,9 +766,9 @@ namespace Tests {
             board.CreatePiece(ChessPiece.EName.Bishop, 5, 6, ChessPiece.EColour.White);
             board.CreatePiece(ChessPiece.EName.King, 6, 2, ChessPiece.EColour.White);
             board.CreatePiece(ChessPiece.EName.Pawn, 7, 1, ChessPiece.EColour.White);
-            board.UpdateBoardState();
+            board.UpdateBoardStatus();
 
-            Assert.AreEqual(board.State[ChessPiece.EColour.Black], ChessBoard.BoardState.Stalemate);
+            Assert.AreEqual(board.State[ChessPiece.EColour.Black], ChessBoard.BoardStatus.Stalemate);
         }
 
         [Test]
@@ -810,7 +810,7 @@ namespace Tests {
             Assert.AreEqual(board.Pieces[1, 0].Row, 1);
             Assert.AreEqual(board.Pieces[1, 0].Column, 0);
             Assert.AreEqual(board.Turn, 0);
-            board.UpdateBoardState();
+            board.UpdateBoardStatus();
 
             bool hasBishopPromotion = false;
             bool hasQueenPromotion = false;

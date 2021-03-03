@@ -297,9 +297,9 @@ public class GameManager : MonoBehaviour {
         SelectedPiece?.ToggleSelected(false);
         var state = LogicBoard.State[CanMove];
 
-        if (state == ChessBoard.BoardState.Check) {
+        if (state == ChessBoard.BoardStatus.Check) {
             boardInterfaceManager.SetText($"{CanMove} is in check");
-        } else if (state == ChessBoard.BoardState.Checkmate || state == ChessBoard.BoardState.Stalemate) {
+        } else if (state == ChessBoard.BoardStatus.Checkmate || state == ChessBoard.BoardStatus.Stalemate) {
             EndGame(state);
             return;
         } else {
@@ -333,9 +333,9 @@ public class GameManager : MonoBehaviour {
     }
 
 
-    void EndGame(ChessBoard.BoardState state) {
+    void EndGame(ChessBoard.BoardStatus state) {
         string message;
-        if (state == ChessBoard.BoardState.Checkmate) {
+        if (state == ChessBoard.BoardStatus.Checkmate) {
             var winner = CanMove.Inverse();
             if (winner == Player) message = "Checkmate! You win!";
             else message = "Checkmate! Your opponent won.";
