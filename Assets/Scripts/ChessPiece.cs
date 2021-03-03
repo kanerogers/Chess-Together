@@ -11,7 +11,7 @@ public abstract class ChessPiece {
         var (_, _, toRow, toColumn) = move.ToCoordinates();
 
         if (toRow == Row && toColumn == Column) {
-            Logger.Log("Moves", $"Move {move} is invalid. Can't move to same square");
+            // Logger.Log("Moves", $"Move {move} is invalid. Can't move to same square");
             return false;
         }
 
@@ -19,7 +19,7 @@ public abstract class ChessPiece {
             return false;
         }
         if (toColumn > 7 || toColumn < 0) {
-            Logger.Log("Moves", $"Move {move} is invalid. Invalid column {toColumn}");
+            // Logger.Log("Moves", $"Move {move} is invalid. Invalid column {toColumn}");
             return false;
         }
 
@@ -28,7 +28,7 @@ public abstract class ChessPiece {
         if (piece != null) {
             // FIDE 3.1 It is not permitted to move a piece to a square occupied by a piece of the same colour.
             if (piece.Colour == Colour) {
-                Logger.Log("Moves", $"Move {move} is invalid. {piece} is the same colour as {this}");
+                // Logger.Log("Moves", $"Move {move} is invalid. {piece} is the same colour as {this}");
                 return false;
             }
         }
@@ -99,11 +99,11 @@ public abstract class ChessPiece {
 
     public void UpdateState(Move move) {
         var (_, _, toRow, toColumn) = move.ToCoordinates();
-        Logger.Log($"Updating {this}..");
+        // Logger.Log($"Updating {this}..");
         Row = toRow;
         Column = toColumn;
         HasMoved = true;
-        Logger.Log($"Finished updating {this}");
+        // Logger.Log($"Finished updating {this}");
     }
 
     public bool IsRankOrFile(int toRow, int toColumn) {
