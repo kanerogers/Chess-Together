@@ -48,9 +48,9 @@ public class Move : IEquatable<Move> {
 
     public override string ToString() {
         if (PieceToPromoteTo == 0) {
-            return $"Move {Sequence}: {FromRow},{FromColumn} to {ToRow},{ToColumn}. Score: {Score}";
+            return $"Sequence {Sequence}: {FromRow},{FromColumn} to {ToRow},{ToColumn}. Score: {Score}";
         } else {
-            return $"Move {Sequence}: {FromRow},{FromColumn} to {ToRow},{ToColumn}. Score: {Score}, Promote to: {PieceToPromoteTo}";
+            return $"Sequence {Sequence}: {FromRow},{FromColumn} to {ToRow},{ToColumn}. Score: {Score}, Promote to: {PieceToPromoteTo}";
         }
     }
 
