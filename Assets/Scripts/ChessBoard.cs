@@ -41,6 +41,16 @@ public class ChessBoard {
 
     public bool Move(Move move, bool isKingInCheckTest = false) {
         // Is this move valid?
+        if (!IsValid(move, isKingInCheckTest)) return false;
+
+        // Move is valid! Update state.
+        UpdateState(move, isKingInCheckTest);
+
+        // Done!
+        return true;
+    }
+
+    public bool IsValid(Move move, bool isKingInCheckTest) {
         var (fromRow, fromColumn, toRow, toColumn) = move.ToCoordinates();
         var piece = Pieces[fromRow, fromColumn];
 
@@ -59,10 +69,6 @@ public class ChessBoard {
         // Would this put us in check?
         if (!isKingInCheckTest) if (WouldPutKingInCheck(move)) return false;
 
-        // Move is valid! Update state.
-        UpdateState(move, isKingInCheckTest);
-
-        // Done!
         return true;
     }
 
@@ -82,10 +88,7 @@ public class ChessBoard {
         UpdateEnPassantState(move);
 
         Logger.Log($"..done!");
-
     }
-
-
 
     public void Undo(bool isKingInCheckTest = false) {
         var (lastMove, removedPiece) = UndoStack.Pop();
@@ -93,24 +96,10 @@ public class ChessBoard {
 
         UndoPiecesState(lastMove, removedPiece);
         UndoTurn(lastMove);
-
-        // // Clear the EnPassant state - it's now invalid.
-        // ClearEnPassantState();
-
-        // // Restore any en passant state
-        // if (lastMove.previousEnPassantState != null) {
-        //     var (row, column) = (lastMove.previousEnPassantState.Row, lastMove.previousEnPassantState.Column);
-        //     Logger.Log($"Restoring EnPassant state for {row},{column} = {lastMove.previousEnPassantState.CanBeCaptured}");
-        //     EnPassantState[(row, column)] = lastMove.previousEnPassantState.CanBeCaptured;
-        // }
-
-        // // If this move was the first time the piece moved, then reset its HasMoved flag
-        // if (lastMove.firstMoved) {
-        //     movedPiece.HasMoved = false;
-        // }
-
-        // Turn--;
+        UndoEnPassantState(lastMove);
+        if (!isKingInCheckTest) UpdateBoardStatus();
     }
+
     public bool IsValidMove(ChessPiece piece, int toRow, int toColumn) {
         var validMoves = ValidMoves[piece.Colour];
         var move = new Move(piece.Row, piece.Column, toRow, toColumn);
@@ -313,6 +302,19 @@ public class ChessBoard {
 
     private void UpdateEnPassantState(Move move) {
         // TODO
+    }
+
+    private void UndoEnPassantState(Move lastMove) {
+        ClearEnPassantState();
+        var previousState = lastMove.previousEnPassantState;
+
+        // Restore any en passant state
+        if (previousState != null) {
+            var (row, column) = (previousState.Row, previousState.Column);
+            var canBeCaptured = previousState.CanBeCaptured;
+            Logger.Log($"Restoring EnPassant state for {row},{column} = {canBeCaptured}");
+            EnPassantState[(row, column)] = canBeCaptured;
+        }
     }
 
     private bool WouldPutKingInCheck(Move move) {
