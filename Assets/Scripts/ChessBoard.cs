@@ -9,7 +9,7 @@ public class ChessBoard {
     public static ChessBoard Inst;
     public int Turn;
     public Stack<(Move, ChessPiece)> UndoStack = new Stack<(Move, ChessPiece)>();
-    public Dictionary<ChessPiece.EColour, BoardState> State = new Dictionary<ChessPiece.EColour, BoardState>();
+    public Dictionary<ChessPiece.EColour, BoardStatus> State = new Dictionary<ChessPiece.EColour, BoardStatus>();
     public Dictionary<(int, int), Boolean> EnPassantState = new Dictionary<(int, int), bool>();
 
     #region Public
@@ -29,9 +29,14 @@ public class ChessBoard {
         if (emptyBoard) return;
         SetUpBoard();
 
-        State[ChessPiece.EColour.Black] = BoardState.NotInCheck;
-        State[ChessPiece.EColour.White] = BoardState.NotInCheck;
-        UpdateBoardState();
+        State[ChessPiece.EColour.Black] = BoardStatus.NotInCheck;
+        State[ChessPiece.EColour.White] = BoardStatus.NotInCheck;
+        UpdateBoardStatus();
+    }
+
+    public bool Move(int fromRow, int fromColumn, int toRow, int toColumn, bool lazy = false) {
+        var move = new Move(fromRow, fromColumn, toRow, toColumn);
+        return Move(move, lazy);
     }
 
     public bool Move(Move move, bool isKingInCheckTest = false) {
@@ -54,7 +59,15 @@ public class ChessBoard {
         // Would this put us in check?
         if (!isKingInCheckTest) if (WouldPutKingInCheck(move)) return false;
 
-        // Move is valid! 
+        // Move is valid! Update state.
+        UpdateState(move, isKingInCheckTest);
+
+        // Done!
+        return true;
+    }
+
+    private void UpdateState(Move move, bool isKingInCheckTest) {
+        var (_, _, toRow, toColumn) = move.ToCoordinates();
 
         // Before we can update the state, we need to stash the move away.
         var removedPiece = Pieces[toRow, toColumn];
@@ -65,32 +78,21 @@ public class ChessBoard {
         // Update state.
         UpdatePiecesState(move);
         UpdateTurn(move);
-        if (!isKingInCheckTest) UpdateBoardState();
+        if (!isKingInCheckTest) UpdateBoardStatus();
         UpdateEnPassantState(move);
 
         Logger.Log($"..done!");
 
-        // Done!
-        return true;
     }
 
-    public bool Move(int fromRow, int fromColumn, int toRow, int toColumn, bool lazy = false) {
-        var move = new Move(fromRow, fromColumn, toRow, toColumn);
-        return Move(move, lazy);
-    }
 
-    public bool IsValidMove(ChessPiece piece, int toRow, int toColumn) {
-        var validMoves = ValidMoves[piece.Colour];
-        var move = new Move(piece.Row, piece.Column, toRow, toColumn);
-
-        return validMoves.Contains(move);
-    }
 
     public void Undo(bool isKingInCheckTest = false) {
         var (lastMove, removedPiece) = UndoStack.Pop();
         Logger.Log("UNDO", $"Undoing {lastMove}");
 
         UndoPiecesState(lastMove, removedPiece);
+        UndoTurn(lastMove);
 
         // // Clear the EnPassant state - it's now invalid.
         // ClearEnPassantState();
@@ -107,14 +109,13 @@ public class ChessBoard {
         //     movedPiece.HasMoved = false;
         // }
 
-        // movedPiece.Row = lastMove.FromRow;
-        // movedPiece.Column = lastMove.FromColumn;
-
-        // Pieces[lastMove.FromRow, lastMove.FromColumn] = movedPiece;
-
-        // // Then put back the piece that was there (if null then keep as null)
-        // Pieces[lastMove.ToRow, lastMove.ToColumn] = removedPiece;
         // Turn--;
+    }
+    public bool IsValidMove(ChessPiece piece, int toRow, int toColumn) {
+        var validMoves = ValidMoves[piece.Colour];
+        var move = new Move(piece.Row, piece.Column, toRow, toColumn);
+
+        return validMoves.Contains(move);
     }
 
 
@@ -160,20 +161,20 @@ public class ChessBoard {
     // Possibly overloaded function that: 
     // - Returns whether the player of a given colour is in checkmate
     // - Evaluates all valid moves for the player
-    public void UpdateBoardState() {
+    public void UpdateBoardStatus() {
         Logger.Log("BOARD STATE", "Updating board state.");
         // Take a deep breath..
-        State[ChessPiece.EColour.Black] = BoardState.NotInCheck;
-        State[ChessPiece.EColour.White] = BoardState.NotInCheck;
+        State[ChessPiece.EColour.Black] = BoardStatus.NotInCheck;
+        State[ChessPiece.EColour.White] = BoardStatus.NotInCheck;
 
         // If a King is in Check, assume it's Checkmate UNLESS we can prove otherwise.
 
         if (BlackKing.IsInCheck(Pieces)) {
-            State[ChessPiece.EColour.Black] = BoardState.Checkmate;
+            State[ChessPiece.EColour.Black] = BoardStatus.Checkmate;
         }
 
         if (WhiteKing.IsInCheck(Pieces)) {
-            State[ChessPiece.EColour.White] = BoardState.Checkmate;
+            State[ChessPiece.EColour.White] = BoardStatus.Checkmate;
         }
 
         // Clear all our valid moves.
@@ -237,7 +238,7 @@ public class ChessBoard {
                     }
 
                     // OK: The King is not in check, no need to evaluate if this is checkmate.
-                    if (State[colour] == BoardState.NotInCheck) continue;
+                    if (State[colour] == BoardStatus.NotInCheck) continue;
 
                     var king = colour == ChessPiece.EColour.Black ? BlackKing : WhiteKing;
                     Move(move, true);
@@ -245,7 +246,7 @@ public class ChessBoard {
                     // If this move would put the King out of check, then we know that they're 
                     // not in Checkmate.
                     if (!king.IsInCheck(Pieces)) {
-                        State[colour] = BoardState.Check;
+                        State[colour] = BoardStatus.Check;
                     }
                     Undo();
                 }
@@ -254,8 +255,8 @@ public class ChessBoard {
 
         // If we're not in checkmate and there are no valid moves left, this is a stalemate.
         foreach (ChessPiece.EColour colour in Enum.GetValues(typeof(ChessPiece.EColour))) {
-            if (State[colour] == BoardState.Checkmate) return;
-            if (ValidMoves[colour].Count == 0) State[colour] = BoardState.Stalemate;
+            if (State[colour] == BoardStatus.Checkmate) return;
+            if (ValidMoves[colour].Count == 0) State[colour] = BoardStatus.Stalemate;
         }
     }
     #endregion
@@ -304,6 +305,10 @@ public class ChessBoard {
     private void UpdateTurn(Move move) {
         // TODO: Set turn in move?
         Turn++;
+    }
+
+    private void UndoTurn(Move lastMove) {
+        Turn--;
     }
 
     private void UpdateEnPassantState(Move move) {
@@ -524,7 +529,7 @@ public class ChessBoard {
     }
     #endregion
 
-    public enum BoardState {
+    public enum BoardStatus {
         NotInCheck,
         Check,
         Checkmate,
