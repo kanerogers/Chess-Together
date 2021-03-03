@@ -54,6 +54,10 @@ public class Move : IEquatable<Move> {
         }
     }
 
+    internal (int, int, int, int) ToCoordinates() {
+        return (FromRow, FromColumn, ToRow, ToColumn);
+    }
+
     public Move(object obj) {
         var source = (IDictionary<string, object>)obj;
 
