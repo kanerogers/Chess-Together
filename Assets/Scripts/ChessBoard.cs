@@ -18,7 +18,7 @@ public class ChessBoard {
         SetUpBoard();
         ValidMoves[ChessPiece.EColour.Black] = new List<Move>();
         ValidMoves[ChessPiece.EColour.White] = new List<Move>();
-        UpdateBoardState();
+        // UpdateBoardState();
     }
 
     public ChessBoard(bool emptyBoard) {
@@ -40,10 +40,16 @@ public class ChessBoard {
         var piece = Pieces[fromRow, fromColumn];
 
         // Does the piece exist?
-        if (piece == null) return false;
+        if (piece == null) {
+            Logger.Log("MOVES", $"Piece at {fromRow},{fromColumn} does not exist.");
+            return false;
+        }
 
         // Is this a valid move?
-        if (!piece.CheckMove(Pieces, move)) return false;
+        if (!piece.CheckMove(Pieces, move)) {
+            Logger.Log("MOVES", $"Move {move} is invalid.");
+            return false;
+        }
 
         // Would this put us in check?
         if (!lazy) if (WouldPutKingInCheck(move)) return false;
@@ -62,7 +68,6 @@ public class ChessBoard {
 
         // Done!
         return true;
-
     }
 
     public bool Move(int fromRow, int fromColumn, int toRow, int toColumn, bool lazy = false) {
@@ -195,8 +200,9 @@ public class ChessBoard {
 
             for (int toRow = 0; toRow < 8; toRow++) {
                 for (int toColumn = 0; toColumn < 8; toColumn++) {
-                    if (!piece.CheckMove(Pieces, toRow, toColumn)) continue;
-                    if (WouldPutKingInCheck(piece, toRow, toColumn)) continue;
+                    var move = new Move(piece.Row, piece.Column, toRow, toColumn);
+                    if (!piece.CheckMove(Pieces, move)) continue;
+                    if (WouldPutKingInCheck(move)) continue;
 
                     // Okay, it's legal. First, evaluate this move.
 
@@ -222,9 +228,6 @@ public class ChessBoard {
                         var pawn = (Pawn)piece;
                         isPromotion = pawn.IsPromotion(toRow, toColumn);
                     }
-
-                    // Add this to our list of valid moves.
-                    Move move = null;
 
                     // If it's a promotion, we have to add all the promotion possibilities and NOT let the pawn move to the end row.
                     if (isPromotion) {
@@ -289,18 +292,7 @@ public class ChessBoard {
     }
 
     private void UpdateEnPassantState(Move move) {
-    }
-
-
-    private bool WouldPutKingInCheck(ChessPiece piece, int toRow, int toColumn) {
-        var king = piece.Colour == ChessPiece.EColour.Black ? BlackKing : WhiteKing;
-        var move = new Move(piece.Row, piece.Column, toRow, toColumn);
-        if (!Move(move, true)) {
-            throw new System.Exception($"Attempted to make invalid move: {move}");
-        }
-        var isInCheck = (king.IsInCheck(Pieces));
-        Undo();
-        return isInCheck;
+        // TODO
     }
 
     private bool WouldPutKingInCheck(Move move) {
