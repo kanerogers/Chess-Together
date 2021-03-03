@@ -100,35 +100,32 @@ public class ChessBoard {
             MoveRookForCastling(toRow, originalColumn);
         }
 
+        // Update en-passant state
+        PreviousEnPassantState state = null;
+
+        if (!lazy) {
+            // Invalidate previous state
+            ClearEnPassantState();
+
+            // Set new state
+            if (piece.Name == ChessPiece.EName.Pawn) {
+                var pawn = (Pawn)piece;
+                if (pawn.CanBeCapturedByEnpassant) {
+                    Logger.Log($"Setting new EnPassant state for {toRow},{toColumn} = true");
+                    EnPassantState[(toRow, toColumn)] = true;
+                    state = new PreviousEnPassantState(toRow, toColumn, true);
+                }
+            }
+        }
+
         // Stash the outcome of this move.
         var lastMove = new Move(fromRow, fromColumn, toRow, toColumn);
         lastMove.isCastling = isCastling;
         lastMove.firstMoved = firstMoved;
+        lastMove.previousEnPassantState = state;
+
         var removedPiece = Pieces[toRow, toColumn];
         UndoStack.Push((lastMove, removedPiece));
-
-        // Update en-passant state
-        // Invalidate previous state
-        foreach (var s in EnPassantState) {
-            var (row, column) = s.Key;
-            var pawn = Pieces[row, column];
-            if (pawn != null) {
-                var p = (Pawn)pawn;
-                Logger.Log($"Setting {pawn} canbecaptured to false");
-                p.CanBeCapturedByEnpassant = false;
-            }
-        }
-
-        EnPassantState.Clear();
-
-        // Set new state
-        if (piece.Name == ChessPiece.EName.Pawn) {
-            var pawn = (Pawn)piece;
-            if (pawn.CanBeCapturedByEnpassant) {
-                Logger.Log($"Setting state - Pawn at {toRow},{toColumn} canbecaptured to true");
-                EnPassantState[(toRow, toColumn)] = true;
-            }
-        }
 
         // Update the piece's bookkeeping.
         piece.Column = toColumn;
@@ -159,6 +156,7 @@ public class ChessBoard {
 
     public void Undo() {
         var (lastMove, removedPiece) = UndoStack.Pop();
+        Logger.Log("UNDO", $"Undoing {lastMove}");
         var (toRow, toColumn) = (lastMove.ToRow, lastMove.ToColumn);
 
         if (lastMove.PieceToPromoteTo != ChessPiece.EName.None) {
@@ -176,7 +174,15 @@ public class ChessBoard {
             UndoCastle(toRow, toColumn);
         }
 
-        // If this was a pawn, we need to re-set its 
+        // Clear the EnPassant state - it's now invalid.
+        ClearEnPassantState();
+
+        // Restore any en passant state
+        if (lastMove.previousEnPassantState != null) {
+            var (row, column) = (lastMove.previousEnPassantState.Row, lastMove.previousEnPassantState.Column);
+            Logger.Log($"Restoring EnPassant state for {row},{column} = {lastMove.previousEnPassantState.CanBeCaptured}");
+            EnPassantState[(row, column)] = lastMove.previousEnPassantState.CanBeCaptured;
+        }
 
         // If this move was the first time the piece moved, then reset its HasMoved flag
         if (lastMove.firstMoved) {
@@ -552,6 +558,24 @@ public class ChessBoard {
         // Done-ski desu~~
         Turn--;
     }
+    void ClearEnPassantState() {
+        foreach (var s in EnPassantState) {
+            var (row, column) = s.Key;
+            var pawn = Pieces[row, column];
+            Logger.Log($"Setting new EnPassant state for {row},{column} = false");
+            if (pawn != null) {
+                if (pawn.Name != ChessPiece.EName.Pawn) {
+                    throw new Exception($"Invalid enpassant state - {pawn}");
+                }
+                var p = (Pawn)pawn;
+                p.CanBeCapturedByEnpassant = false;
+            }
+        }
+
+        EnPassantState.Clear();
+
+    }
+
 
     #endregion // private
 

@@ -86,7 +86,7 @@ namespace Tests {
         [Test]
         public void TestEnPassant() {
             // En passant
-            var lazy = true;
+            var lazy = false;
 
             // FIDE 3.7d
             // A pawn attacking a square crossed by an opponent’s pawn which has advanced two
@@ -109,16 +109,13 @@ namespace Tests {
 
             // White moves forward
             Assert.IsTrue(board.Move(6, 0, 4, 0, lazy));
+            Assert.IsTrue(board.Move(4, 0, 3, 0, lazy));
 
             // Black advances two squares
-            Logger.Log($"Moving from 1,1 to 3,1");
             Assert.IsTrue(board.Move(1, 1, 3, 1, lazy));
-            Logger.Log($"Done");
 
-            // White moves forward again - invalidating en passant
-            Logger.Log($"Moving from 4,0 to 3,0");
-            Assert.IsTrue(board.Move(4, 0, 3, 0, lazy));
-            Logger.Log($"Done");
+            // White makes another move, invalidating en passant
+            Assert.IsTrue(board.Move(6, 2, 5, 2, lazy));
 
             // En passant not possible.
             Assert.IsFalse(board.Move(3, 0, 2, 1, lazy));

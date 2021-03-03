@@ -1,6 +1,6 @@
 using System;
 public class Pawn : ChessPiece {
-    public bool CanBeCapturedByEnpassant;
+    public bool CanBeCapturedByEnpassant = false;
 
     public Pawn(EColour colour, int row, int column) {
         Colour = colour;
@@ -44,7 +44,6 @@ public class Pawn : ChessPiece {
             // Check if there is a piece on this diagonal
             if (pieceOnSquare != null) {
                 // Logger.Log("Pawn", $"Pawn can move diagonally to {toRow},{toColumn} as there is a piece on that square: {pieceOnSquare}");
-                // Piece has moved, CanBeCapturedByEnpassant is now invalidated.
                 return true;
             } else {
                 // Check if this is en passant
@@ -78,7 +77,7 @@ public class Pawn : ChessPiece {
             }
 
             // Set the CanBeCapturedByEnPassant flag
-            Logger.Log($"Pawn at {toRow},{toColumn} canbecaptured = true");
+            Logger.Log("PAWN", $"Setting enPassant flag for {toRow},{toColumn} to true");
             CanBeCapturedByEnpassant = true;
         }
 
@@ -92,16 +91,14 @@ public class Pawn : ChessPiece {
     private bool IsEnPassant(int toRow, int toColumn, ChessPiece[,] pieces) {
         // First, find the EnPassant square.
         var enPassantRow = GetEnPassantRow(toRow);
-        Logger.Log("EP", $"Enpassant square: {enPassantRow},{toColumn}");
         var piece = pieces[enPassantRow, toColumn];
         if (piece == null) return false;
 
-        if (piece.Name != ChessPiece.EName.Pawn) return false;
+        if (piece.Name != ChessPiece.EName.Pawn || piece.Colour == Colour) return false;
 
         var pawn = (Pawn)piece;
         // "..This capture is only legal on the move following this advance"
         if (!pawn.CanBeCapturedByEnpassant) {
-            Logger.Log("EP", $"Unable to capture pawn {pawn} - can be captured is false");
             return false;
         }
 
