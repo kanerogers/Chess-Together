@@ -18,7 +18,7 @@ public class ChessBoard {
         SetUpBoard();
         ValidMoves[ChessPiece.EColour.Black] = new List<Move>();
         ValidMoves[ChessPiece.EColour.White] = new List<Move>();
-        CheckBoard();
+        UpdateBoardState();
     }
 
     public ChessBoard(bool emptyBoard) {
@@ -31,120 +31,43 @@ public class ChessBoard {
 
         State[ChessPiece.EColour.Black] = BoardState.NotInCheck;
         State[ChessPiece.EColour.White] = BoardState.NotInCheck;
-        CheckBoard();
+        UpdateBoardState();
     }
 
     public bool Move(Move move, bool lazy = false) {
-        if (move.PieceToPromoteTo != ChessPiece.EName.None) {
-            return PromotePiece(move, lazy);
-        }
+        // Is this move valid?
+        var (fromRow, fromColumn, toRow, toColumn) = move.ToCoordinates();
+        var piece = Pieces[fromRow, fromColumn];
 
-        return Move(move.FromRow, move.FromColumn, move.ToRow, move.ToColumn, lazy);
+        // Does the piece exist?
+        if (piece == null) return false;
+
+        // Is this a valid move?
+        if (!piece.CheckMove(Pieces, move)) return false;
+
+        // Would this put us in check?
+        if (!lazy) if (WouldPutKingInCheck(move)) return false;
+
+        // Move is valid! 
+
+        // Before we can update the state, we need to stash the move away.
+        var removedPiece = Pieces[toRow, toColumn];
+        UndoStack.Push((move, removedPiece));
+
+        // Update state.
+        UpdatePiecesState(move);            // Updates Pieces[]
+        UpdateTurn(move);                   // Updates Turn 
+        if (!lazy) UpdateBoardState();      // Updates BoardState and ValidMoves 
+        UpdateEnPassantState(move);         // Updates EnPassantState
+
+        // Done!
+        return true;
+
     }
 
-
     public bool Move(int fromRow, int fromColumn, int toRow, int toColumn, bool lazy = false) {
-        var piece = Pieces[fromRow, fromColumn];
-        if (piece == null) {
-            // Logger.Log("Moves", $"Error - No piece found at {fromRow},{fromColumn}");
-            return false;
-        }
-
-        // First, check if this is a castle. Because castling is fucking whack.
-        bool isCastling = false;
-
-        // Store the original column for this move as castling will mangle it.
-        int originalColumn = toColumn;
-        bool isKing = piece.Name == ChessPiece.EName.King;
-
-        if (isKing) {
-            var king = (King)piece;
-            isCastling = king.IsCastling(Pieces, toRow, toColumn);
-        }
-
-        // No need to check move if we know this is a valid castle.
-        if (isCastling) {
-            // Change the destination column for castling.
-            toColumn = GetCastlingDestination(toColumn);
-        } else {
-            // Is this move legal?
-            if (!piece.CheckMove(Pieces, toRow, toColumn)) {
-                // Logger.Log($"Moves", $"Cannot move {piece} to {toRow},{toColumn} - illegal move");
-                return false;
-            }
-
-            if (!lazy) {
-                if (WouldPutKingInCheck(piece, toRow, toColumn)) {
-                    // Logger.Log("Moves", $"Cannot move {piece.Colour} {piece.Name} at {fromRow},{fromColumn} to {toRow},{toColumn}. Would put {piece.Colour} King in check.");
-
-                    return false;
-                }
-            }
-        }
-
-        // Would this move put us into check?
-
-        // OKAY! This move is valid, let's execute it.
-        // Need to keep a record of whether King or Rook has moved.
-        bool firstMoved = false;
-        if (piece.Name == ChessPiece.EName.Rook || isKing) {
-            if (!piece.HasMoved) {
-                firstMoved = true;
-                piece.HasMoved = true;
-            }
-        }
-
-
-        // Need to move the rook as well..
-        if (isCastling) {
-            MoveRookForCastling(toRow, originalColumn);
-        }
-
-        // Update en-passant state
-        PreviousEnPassantState state = null;
-
-        if (!lazy) {
-            // Invalidate previous state
-            ClearEnPassantState();
-
-            // Set new state
-            if (piece.Name == ChessPiece.EName.Pawn) {
-                var pawn = (Pawn)piece;
-                if (pawn.CanBeCapturedByEnpassant) {
-                    Logger.Log($"Setting new EnPassant state for {toRow},{toColumn} = true");
-                    EnPassantState[(toRow, toColumn)] = true;
-                    state = new PreviousEnPassantState(toRow, toColumn, true);
-                }
-            }
-        }
-
-        // Stash the outcome of this move.
-        var lastMove = new Move(fromRow, fromColumn, toRow, toColumn);
-        lastMove.isCastling = isCastling;
-        lastMove.firstMoved = firstMoved;
-        lastMove.previousEnPassantState = state;
-
-        var removedPiece = Pieces[toRow, toColumn];
-        UndoStack.Push((lastMove, removedPiece));
-
-        // Update the piece's bookkeeping.
-        piece.Column = toColumn;
-        piece.Row = toRow;
-
-        // Update our own bookkeeping.
-        Pieces[toRow, toColumn] = piece;
-        Pieces[fromRow, fromColumn] = null;
-
-
-        // Update the state etc.
-        if (!lazy) {
-            CheckBoard();
-        }
-
-        Turn++;
-
-        // Happy days.
-        return true;
+        var move = new Move(fromRow, fromColumn, toRow, toColumn);
+        return Move(move, lazy);
     }
 
     public bool IsValidMove(ChessPiece piece, int toRow, int toColumn) {
@@ -246,7 +169,7 @@ public class ChessBoard {
     // Possibly overloaded function that: 
     // - Returns whether the player of a given colour is in checkmate
     // - Evaluates all valid moves for the player
-    public void CheckBoard() {
+    public void UpdateBoardState() {
         // Take a deep breath..
         State[ChessPiece.EColour.Black] = BoardState.NotInCheck;
         State[ChessPiece.EColour.White] = BoardState.NotInCheck;
@@ -346,6 +269,28 @@ public class ChessBoard {
     #endregion
 
     #region Private
+    private void UpdatePiecesState(Move move) {
+        if (move.PieceToPromoteTo != ChessPiece.EName.None) {
+            PromotePiece(move);
+            return;
+        }
+
+        var (fromRow, fromColumn, toRow, toColumn) = move.ToCoordinates();
+        var piece = Pieces[toRow, toColumn];
+
+        // Update our own bookkeeping.
+        Pieces[toRow, toColumn] = piece;
+        Pieces[fromRow, fromColumn] = null;
+    }
+
+    private void UpdateTurn(Move move) {
+        // TODO: Set turn in move?
+        Turn++;
+    }
+
+    private void UpdateEnPassantState(Move move) {
+    }
+
 
     private bool WouldPutKingInCheck(ChessPiece piece, int toRow, int toColumn) {
         var king = piece.Colour == ChessPiece.EColour.Black ? BlackKing : WhiteKing;
@@ -358,37 +303,23 @@ public class ChessBoard {
         return isInCheck;
     }
 
-    private bool PromotePiece(Move move, bool lazy) {
-        // First, ensure this is actually valid.
-        var (fromRow, fromColumn, toRow, toColumn) = (move.FromRow, move.FromColumn, move.ToRow, move.ToColumn);
+    private bool WouldPutKingInCheck(Move move) {
+        var (fromRow, fromColumn, _, _) = move.ToCoordinates();
+        var piece = Pieces[fromRow, fromColumn];
+        var king = piece.Colour == ChessPiece.EColour.Black ? BlackKing : WhiteKing;
+
+        if (!Move(move, true)) {
+            throw new System.Exception($"Attempted to make invalid move: {move}");
+        }
+
+        var isInCheck = (king.IsInCheck(Pieces));
+        Undo();
+        return isInCheck;
+    }
+
+    private void PromotePiece(Move move) {
+        var (fromRow, fromColumn, toRow, toColumn) = move.ToCoordinates();
         var pawn = Pieces[fromRow, fromColumn];
-
-        if (pawn == null) {
-            throw new Exception($"Attempted to make invalid promotion: {move} - piece is null. Board state: {this}");
-        }
-
-        if (move.PieceToPromoteTo == ChessPiece.EName.None) {
-            throw new Exception($"Unable to promote piece with move {move} - PieceToPromoteTo is null. Board state: {this} ");
-        }
-
-        if (pawn.Name != ChessPiece.EName.Pawn) {
-            throw new Exception($"Attempted to make invalid promotion: {move} with piece {pawn}. Board state: {this}");
-        }
-
-        var promotionRow = pawn.Colour == ChessPiece.EColour.Black ? 7 : 0;
-        if (toRow != promotionRow) {
-            throw new Exception($"Attempted to make invalid promotion: {move}. Row {toRow} is not {promotionRow}. Board state: {this}");
-        }
-
-        if (!pawn.CheckMove(Pieces, toRow, toColumn)) {
-            throw new Exception($"Invalid prmotion {move} is not a valid move! Board state: {this}");
-        }
-
-        if (!lazy) {
-            if (WouldPutKingInCheck(pawn, toRow, toColumn)) {
-                throw new Exception($"Invalid promotion {move} would put king in check! Board state: {this}");
-            }
-        }
 
         // Phew. Okay, now we can do the promotion.
         // Kill the pawn.
@@ -397,16 +328,9 @@ public class ChessBoard {
         // Create the piece.
         CreatePiece(move.PieceToPromoteTo, toRow, toColumn, pawn.Colour);
 
-        // Do bookkeeping
-        UndoStack.Push((move, pawn));
-
-        if (!lazy) {
-            CheckBoard();
-        }
-
-        Turn++;
-
-        return true;
+        // Modify the undo stack so that it's actually the *pawn* that's the removed piece.
+        var (_, piece) = UndoStack.Peek();
+        piece = pawn;
     }
 
     void SetUpBoard() {
