@@ -14,7 +14,16 @@ public class ChessBoard {
 
     #region Public
     public ChessBoard() {
-        new ChessBoard(false);
+        Turn = 0;
+        Inst = this;
+        ValidMoves[ChessPiece.EColour.Black] = new List<Move>();
+        ValidMoves[ChessPiece.EColour.White] = new List<Move>();
+
+        SetUpBoard();
+
+        State[ChessPiece.EColour.Black] = BoardStatus.NotInCheck;
+        State[ChessPiece.EColour.White] = BoardStatus.NotInCheck;
+        UpdateBoardStatus();
     }
 
     public ChessBoard(bool emptyBoard) {
@@ -56,18 +65,18 @@ public class ChessBoard {
 
         // Does the piece exist?
         if (piece == null) {
-            // Logger.Log("MOVES", $"Piece at {fromRow},{fromColumn} does not exist.");
+            Logger.Log("MOVES", $"Piece at {fromRow},{fromColumn} does not exist.");
             return false;
         }
 
         // Is this a valid move?
         if (!piece.CheckMove(Pieces, move)) {
-            // Logger.Log("MOVES", $"Move {move} is invalid.");
+            Logger.Log("MOVES", $"Move {move} is invalid.");
             return false;
         }
 
         // Would this put us in check?
-        if (!isKingInCheckTest) if (WouldPutKingInCheck(move)) return false;
+        if (!isKingInCheckTest && WouldPutKingInCheck(move)) return false;
 
         return true;
     }
@@ -292,12 +301,10 @@ public class ChessBoard {
     private void UpdateTurn(Move move) {
         // TODO: Set turn in move?
         Turn++;
-        Logger.Log($"Turn is now {Turn}");
     }
 
     private void UndoTurn(Move lastMove) {
         Turn--;
-        Logger.Log($"Turn is now {Turn}");
     }
 
     private void UpdateEnPassantState(Move move) {
