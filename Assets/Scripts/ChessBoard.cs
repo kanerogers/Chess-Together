@@ -266,15 +266,23 @@ public class ChessBoard {
         var (fromRow, fromColumn, toRow, toColumn) = move.ToCoordinates();
         var piece = Pieces[fromRow, fromColumn];
 
+        // If this was the first time the piece moved, set that flag on Move
+        if (!piece.HasMoved) move.firstMoved = true;
+
         // Update the piece's bookkeeping
         piece.UpdateState(move);
 
         // Update our own bookkeeping.
         Pieces[toRow, toColumn] = piece;
         Pieces[fromRow, fromColumn] = null;
+
+        if (move.isCastling) {
+            DoCastle(move);
+        }
     }
 
     private void UndoPiecesState(Move lastMove, ChessPiece removedPiece) {
+        // Promotion is a special case, handle that on its own.
         if (lastMove.IsPromotion()) {
             UndoPromotion(lastMove, removedPiece);
             return;
@@ -283,6 +291,7 @@ public class ChessBoard {
         var (fromRow, fromColumn, toRow, toColumn) = lastMove.ToCoordinates();
         var movedPiece = Pieces[toRow, toColumn];
 
+        // If this was a castle, undo that too.
         if (lastMove.isCastling) {
             UndoCastle(toRow, toColumn);
         }
@@ -322,6 +331,35 @@ public class ChessBoard {
             // Logger.Log($"Restoring EnPassant state for {row},{column} = {canBeCaptured}");
             EnPassantState[(row, column)] = canBeCaptured;
         }
+    }
+    private void DoCastle(Move move) {
+        var (fromRow, _, toRow, kingToColumn) = move.ToCoordinates();
+        var rookOriginalColumn = kingToColumn == 6 ? 7 : 0;
+        var rookNewColumn = rookOriginalColumn == 7 ? 5 : 3;
+        var rook = Pieces[toRow, rookOriginalColumn];
+
+        Pieces[fromRow, rookOriginalColumn] = null;
+        Pieces[toRow, rookNewColumn] = rook;
+        rook.Column = rookNewColumn;
+    }
+
+    private void UndoCastle(int row, int kingMovedToColumn) {
+        // Where was the Rook originally?
+        var originalColumn = kingMovedToColumn == 6 ? 7 : 0;
+
+        // Where did the Rook move to?
+        var newColumn = originalColumn == 7 ? 5 : 3;
+
+        // Get the rook
+        var rook = Pieces[row, newColumn];
+
+        // Reset its position
+        rook.Column = originalColumn;
+        Pieces[row, newColumn] = null;
+        Pieces[row, originalColumn] = rook;
+
+        // Reset its HasMoved flag
+        rook.HasMoved = false;
     }
 
     private bool WouldPutKingInCheck(Move move) {
@@ -451,45 +489,6 @@ public class ChessBoard {
         CreatePiece(ChessPiece.EName.Rook, 7, 7, ChessPiece.EColour.White);
 
     }
-    private int GetCastlingDestination(int toColumn) {
-        // FIDE 3.8 a. 
-        // "..the king is transferred from its original square two squares towards the
-        // rook on its original square"
-        if (toColumn == 7) return 6;
-        else return 2;
-    }
-    private void MoveRookForCastling(int toRow, int toColumn) {
-        // FIDE 3.8 a. 
-        // "..then that rook is transferred to the square the king has
-        // just crossed."
-        var rook = Pieces[toRow, toColumn];
-        Pieces[toRow, toColumn] = null;
-
-        if (toColumn == 7) toColumn = 5;
-        else toColumn = 3;
-
-        // Update the piece's bookkeeping.
-        rook.Column = toColumn;
-
-        // Update our own bookkeeping.
-        Pieces[toRow, toColumn] = rook;
-    }
-
-    private void UndoCastle(int row, int kingMovedToColumn) {
-        int originalColumn, rookMovedToColumn;
-        if (kingMovedToColumn == 2) {
-            originalColumn = 0;
-            rookMovedToColumn = 3;
-        } else {
-            originalColumn = 7;
-            rookMovedToColumn = 5;
-        }
-
-        var rook = Pieces[row, rookMovedToColumn];
-        rook.Column = originalColumn;
-        Pieces[row, rookMovedToColumn] = null;
-        Pieces[row, originalColumn] = rook;
-    }
 
     private void UndoPromotion(Move lastMove, ChessPiece pawn) {
         var (fromRow, fromColumn, toRow, toColumn) = (lastMove.FromRow, lastMove.FromColumn, lastMove.ToRow, lastMove.ToColumn);
@@ -523,10 +522,14 @@ public class ChessBoard {
     #region Overrides
     public override string ToString() {
         var s = "";
-        foreach (var p in Pieces) {
-            if (p == null) continue;
-            s += p.ToString();
-            s += ", ";
+        for (var row = 0; row <= 7; row++) {
+            for (var column = 0; column <= 7; column++) {
+                var p = Pieces[row, column];
+                if (p == null) continue;
+                s += $"{row},{column}: ";
+                s += p.ToString();
+                s += ", ";
+            }
         }
         return s;
     }

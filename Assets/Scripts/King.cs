@@ -13,7 +13,10 @@ public class King : ChessPiece {
         // FIDE 3.8 a. 
         // There are two different ways of moving the king: by moving to any adjoining square
         // or by castling.
-        if (IsCastling(pieces, toRow, toColumn)) return true;
+        if (IsCastling(pieces, move)) {
+            move.isCastling = true;
+            return true;
+        }
 
         if (!base.CheckMove(pieces, move)) return false;
 
@@ -29,7 +32,8 @@ public class King : ChessPiece {
         return true;
     }
 
-    public bool IsCastling(ChessPiece[,] pieces, int toRow, int toColumn) {
+    public bool IsCastling(ChessPiece[,] pieces, Move move) {
+        var (_, _, toRow, toColumn) = move.ToCoordinates();
         // We can't do this check in strict order of the FIDE rules both for optimisation and
         // for sanity reasons, eg. we need to check there are no intervening pieces before we can
         // move the king along its squares in order to check if it will be attacked.
@@ -46,27 +50,29 @@ public class King : ChessPiece {
             return false;
         }
 
-        // Check for Rook columns
-        if (toColumn != 7 && toColumn != 0) {
-            // Logger.Log("IsCastling", $"{toColumn} is not 0 or 7");
+        // Check for castling columns
+        if (toColumn != 6 && toColumn != 2) {
+            // Logger.Log("IsCastling", $"{toColumn} is not 6 or 2");
             return false;
         }
 
+        var rookColumn = toColumn == 6 ? 7 : 0;
+
         // (b) if there is any piece between the king and the rook with which castling is
         // to be effected.
-        if (HasPiecesOnInterveningSquares(pieces, toRow, toColumn)) {
+        if (HasPiecesOnInterveningSquares(pieces, toRow, rookColumn)) {
             // Logger.Log("IsCastling", $"There are pieces on the intervening squares");
             return false;
         }
 
-        var pieceAtDestination = pieces[toRow, toColumn];
-        if (pieceAtDestination == null) {
+        var rook = pieces[toRow, rookColumn];
+        if (rook == null) {
             // Logger.Log("IsCastling", $"No piece at {toRow},{toColumn}");
             return false;
         }
 
-        if (pieceAtDestination.Name != ChessPiece.EName.Rook || pieceAtDestination.Colour != Colour) {
-            // Logger.Log("IsCastling", $"{pieceAtDestination} is not {Colour} Rook");
+        if (rook.Name != ChessPiece.EName.Rook || rook.Colour != Colour) {
+            // Logger.Log("IsCastling", $"{rook} is not {Colour} Rook");
             return false;
         }
 
@@ -79,8 +85,8 @@ public class King : ChessPiece {
         }
 
         // "(b) with a rook that has already moved"
-        if (pieceAtDestination.HasMoved) {
-            // Logger.Log("IsCastling", $"{pieceAtDestination} has moved");
+        if (rook.HasMoved) {
+            // Logger.Log("IsCastling", $"{rook} has moved");
             return false;
         }
 
@@ -92,8 +98,8 @@ public class King : ChessPiece {
         }
 
         // ..[if] the square which it must cross..
-        var squareToCross = toColumn == 7 ? 5 : 3;
-        var destination = toColumn == 7 ? 6 : 2;
+        var squareToCross = toColumn == 6 ? 5 : 3;
+        var destination = toColumn;
         var originalColumn = Column;
 
         // Fake move the king and see if it'll put us in check.
@@ -110,7 +116,7 @@ public class King : ChessPiece {
         var isBeingAttackedOnCrossSquare = IsInCheck(pieces);
 
         // ..or the square which it is to occupy..
-        pieces[Row, Column] = null;
+        pieces[Row, squareToCross] = null;
         p = pieces[Row, destination];
 
         if (p != null) {
@@ -124,6 +130,11 @@ public class King : ChessPiece {
 
         pieces[Row, originalColumn] = this;
         pieces[Row, destination] = null;
+        p = pieces[Row, destination];
+
+        if (p != null) {
+            throw new Exception($"INVALID STATE: Found {p}");
+        }
         Column = originalColumn;
 
         if (isBeingAttackedOnCrossSquare || isBeingAttackedOnDestination) {
