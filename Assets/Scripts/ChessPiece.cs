@@ -99,11 +99,9 @@ public abstract class ChessPiece {
 
     public void UpdateState(Move move) {
         var (_, _, toRow, toColumn) = move.ToCoordinates();
-        // Logger.Log($"Updating {this}..");
         Row = toRow;
         Column = toColumn;
         HasMoved = true;
-        // Logger.Log($"Finished updating {this}");
     }
 
     public bool IsRankOrFile(int toRow, int toColumn) {
