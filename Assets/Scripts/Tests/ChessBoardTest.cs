@@ -582,15 +582,15 @@ namespace Tests {
 
             // Test White King -> Kingside Rook
 
-            var whiteKingSideCastle = new Move(7, 4, 7, 7);
+            var whiteKingSideCastle = new Move(7, 4, 7, 6);
             Assert.IsTrue(board.Move(whiteKingSideCastle));
             whiteKing = board.Pieces[7, 6];
-            Assert.IsTrue(whiteKing.Colour == ChessPiece.EColour.White);
-            Assert.IsTrue(whiteKing.Name == ChessPiece.EName.King);
+            Assert.AreEqual(whiteKing.Colour, ChessPiece.EColour.White);
+            Assert.AreEqual(whiteKing.Name, ChessPiece.EName.King);
 
             whiteRook = board.Pieces[7, 5];
-            Assert.IsTrue(whiteRook.Colour == ChessPiece.EColour.White);
-            Assert.IsTrue(whiteRook.Name == ChessPiece.EName.Rook);
+            Assert.AreEqual(whiteRook.Colour, ChessPiece.EColour.White);
+            Assert.AreEqual(whiteRook.Name, ChessPiece.EName.Rook);
             board.Undo();
 
             // Make sure undo works
@@ -598,15 +598,17 @@ namespace Tests {
             Assert.AreEqual(whiteKing.Column, 4);
             Assert.AreEqual(whiteKing.Colour, ChessPiece.EColour.White);
             Assert.AreEqual(whiteKing.Name, ChessPiece.EName.King);
+            Assert.IsFalse(whiteKing.HasMoved);
 
             whiteRook = board.Pieces[7, 7];
             Assert.AreEqual(whiteRook.Column, 7);
             Assert.IsTrue(whiteRook.Colour == ChessPiece.EColour.White);
             Assert.IsTrue(whiteRook.Name == ChessPiece.EName.Rook);
+            Assert.IsFalse(whiteRook.HasMoved);
 
             // Test White King -> Queenside Rook
 
-            var whiteQueenSideCastle = new Move(7, 4, 7, 0);
+            var whiteQueenSideCastle = new Move(7, 4, 7, 2);
             Assert.IsTrue(board.Move(whiteQueenSideCastle));
             whiteKing = board.Pieces[7, 2];
             Assert.IsTrue(whiteKing.Colour == ChessPiece.EColour.White);
@@ -629,7 +631,7 @@ namespace Tests {
             Assert.IsTrue(whiteRook.Name == ChessPiece.EName.Rook);
 
             // Test Black King -> Kingside Rook
-            var blackKingSideCastle = new Move(0, 4, 0, 7);
+            var blackKingSideCastle = new Move(0, 4, 0, 6);
             Assert.IsTrue(board.Move(blackKingSideCastle));
 
             blackKing = board.Pieces[0, 6];
@@ -653,7 +655,7 @@ namespace Tests {
             Assert.IsTrue(blackRook.Name == ChessPiece.EName.Rook);
 
             // Test Black King -> Queenside Rook
-            var blackQueenSideCastle = new Move(0, 4, 0, 0);
+            var blackQueenSideCastle = new Move(0, 4, 0, 2);
             Assert.IsTrue(board.Move(blackQueenSideCastle));
 
             blackKing = board.Pieces[0, 2];
@@ -724,7 +726,7 @@ namespace Tests {
 
         [Test]
         public void TestCastlingCorruption() {
-            var blackKingSideCastle = new Move(0, 4, 0, 7);
+            var blackKingSideCastle = new Move(0, 4, 0, 6);
             // Okay, now let's try castling with all the pieces on the board.
             var board = new ChessBoard();
 
