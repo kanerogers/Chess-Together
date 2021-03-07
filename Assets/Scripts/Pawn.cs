@@ -79,10 +79,16 @@ public class Pawn : ChessPiece {
 
             // Set the CanBeCapturedByEnPassant flag
             // Logger.Log("PAWN", $"Setting enPassant flag for {toRow},{toColumn} to true");
-            CanBeCapturedByEnpassant = true;
         }
 
         return true;
+    }
+
+    public override void UpdateState(Move move) {
+        var (_, _, toRow, _) = move.ToCoordinates();
+        var forward = GetForward(toRow);
+        base.UpdateState(move);
+        if (forward == 2) CanBeCapturedByEnpassant = true;
     }
 
     // FIDE 3.7d
@@ -100,6 +106,7 @@ public class Pawn : ChessPiece {
         var pawn = (Pawn)piece;
         // "..This capture is only legal on the move following this advance"
         if (!pawn.CanBeCapturedByEnpassant) {
+            // Logger.Log("EP", $"Unable to make en passant capture {toRow},{toColumn} - {piece} cannot be captured");
             return false;
         }
 

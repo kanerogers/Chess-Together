@@ -1,11 +1,9 @@
 public class PreviousEnPassantState {
-    public int Row;
-    public int Column;
+    public Pawn Pawn;
     public bool CanBeCaptured;
 
-    public PreviousEnPassantState(int row, int column, bool canBeCaptured) {
-        Row = row;
-        Column = column;
+    public PreviousEnPassantState(Pawn pawn, bool canBeCaptured) {
+        Pawn = pawn;
         CanBeCaptured = canBeCaptured;
     }
 }

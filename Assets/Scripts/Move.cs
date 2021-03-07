@@ -12,7 +12,7 @@ public class Move : IEquatable<Move> {
     public bool isCastling;
     public bool firstMoved;
     public ChessPiece.EName PieceToPromoteTo;
-    public PreviousEnPassantState previousEnPassantState;
+    public (Pawn, Pawn) PreviousEnPassantState;
 
     public Move(int fromRow, int fromColumn, int toRow, int toColumn) {
         FromRow = fromRow;
