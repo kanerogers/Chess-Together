@@ -67,7 +67,7 @@ public class PGNParser {
                 try {
                     parseLine(line, moves);
                 } catch (System.Exception e) {
-                    Logger.Log("ERROR", $"Error parsing on line {lineNumber}: {line}");
+                    Logger.Log("ERROR", $"Error parsing on line {lineNumber}: {line}: {e}");
                     throw e;
                 }
             }
@@ -119,13 +119,13 @@ public class PGNParser {
     }
 
     public Move parseMoveString(string moveString, ChessPiece.EColour colour) {
+        Logger.Log("PGN", $"Parsing {moveString} for {colour}");
         // If this is a Castle, then handle that
         if (moveString == QUEENSIDE_CASTLE) return parseQueensideCastle(moveString, colour);
         if (moveString == KINGSIDE_CASTLE) return parseKingsideCastle(moveString, colour);
 
         // If this is a promotion, handle that
         if (moveString.Contains(PROMOTION)) return parsePromotion(moveString, colour);
-
 
         // First, find the piece's name based off the move string
         var (pieceName, coordinateString) = parseName(moveString);
@@ -177,13 +177,13 @@ public class PGNParser {
 
     private Move parseKingsideCastle(string moveString, ChessPiece.EColour colour) {
         var row = colour == ChessPiece.EColour.Black ? 0 : 7;
-        return board.ValidMoves[colour].Find(m => m.FromRow == row && m.FromColumn == 4 && m.ToColumn == 7 && m.ToRow == row);
+        return board.ValidMoves[colour].Find(m => m.FromRow == row && m.FromColumn == 4 && m.ToColumn == 6 && m.ToRow == row);
 
     }
 
     private Move parseQueensideCastle(string moveString, ChessPiece.EColour colour) {
         var row = colour == ChessPiece.EColour.Black ? 0 : 7;
-        return board.ValidMoves[colour].Find(m => m.FromRow == row && m.FromColumn == 4 && m.ToColumn == 0 && m.ToRow == row);
+        return board.ValidMoves[colour].Find(m => m.FromRow == row && m.FromColumn == 4 && m.ToColumn == 2 && m.ToRow == row);
     }
 
     private (int, int, int, int) parseCoordinates(string coordinateString) {
