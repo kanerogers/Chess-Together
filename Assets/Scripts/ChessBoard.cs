@@ -201,16 +201,17 @@ public class ChessBoard {
                     // If it is a promotion, we have to add all the promotion possibilities.
                     // TODO: Extract to method on Pawn?
                     if (isPromotion) {
+                        var fromRow = move.FromRow;
                         // FIDE 3.7e - ..
                         // exchanged as part of the same move on the same square for a new queen, rook,
                         // bishop or knight of the same colour.
-                        move = new Move(piece.Row, piece.Column, toRow, toColumn, ChessPiece.EName.Bishop);
+                        move = new Move(fromRow, piece.Column, toRow, toColumn, ChessPiece.EName.Bishop);
                         ValidMoves[colour].Add(move);
-                        move = new Move(piece.Row, piece.Column, toRow, toColumn, ChessPiece.EName.Rook);
+                        move = new Move(fromRow, piece.Column, toRow, toColumn, ChessPiece.EName.Rook);
                         ValidMoves[colour].Add(move);
-                        move = new Move(piece.Row, piece.Column, toRow, toColumn, ChessPiece.EName.Queen);
+                        move = new Move(fromRow, piece.Column, toRow, toColumn, ChessPiece.EName.Queen);
                         ValidMoves[colour].Add(move);
-                        move = new Move(piece.Row, piece.Column, toRow, toColumn, ChessPiece.EName.Knight);
+                        move = new Move(fromRow, piece.Column, toRow, toColumn, ChessPiece.EName.Knight);
                         ValidMoves[colour].Add(move);
                     } else {
                         ValidMoves[colour].Add(move);
