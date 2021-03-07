@@ -97,7 +97,7 @@ public abstract class ChessPiece {
         return a == b;
     }
 
-    public void UpdateState(Move move) {
+    public virtual void UpdateState(Move move) {
         var (_, _, toRow, toColumn) = move.ToCoordinates();
         Row = toRow;
         Column = toColumn;

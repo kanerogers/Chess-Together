@@ -86,7 +86,8 @@ namespace Tests {
         [Test]
         public void TestEnPassant() {
             // En passant
-            var lazy = false;
+            var checkIfKingIsInCheck = true;
+            var checkStateAfterMove = true;
 
             // FIDE 3.7d
             // A pawn attacking a square crossed by an opponent’s pawn which has advanced two
@@ -95,30 +96,45 @@ namespace Tests {
             var board = new ChessBoard();
 
             // White moves forward
-            Assert.IsTrue(board.Move(6, 0, 4, 0, lazy));
-            Assert.IsTrue(board.Move(4, 0, 3, 0, lazy));
+            Assert.IsTrue(board.Move(6, 0, 4, 0, checkIfKingIsInCheck, checkStateAfterMove));
+            Assert.IsTrue(board.Move(4, 0, 3, 0, checkIfKingIsInCheck, checkStateAfterMove));
 
             // Black advances two squares
-            Assert.IsTrue(board.Move(1, 1, 3, 1, lazy));
+            Logger.Log("!!!!!!!!TURN!!");
+            Assert.IsTrue(board.Move(1, 1, 3, 1, checkIfKingIsInCheck, checkStateAfterMove));
 
             // En passant capture
-            Assert.IsTrue(board.Move(3, 0, 2, 1, lazy));
+            Assert.IsTrue(board.Move(3, 0, 2, 1, checkIfKingIsInCheck, checkStateAfterMove));
 
             // This capture is only legal on the move following this advance..
             board = new ChessBoard();
 
             // White moves forward
-            Assert.IsTrue(board.Move(6, 0, 4, 0, lazy));
-            Assert.IsTrue(board.Move(4, 0, 3, 0, lazy));
+            Assert.IsTrue(board.Move(6, 0, 4, 0, checkIfKingIsInCheck, checkStateAfterMove));
+            Assert.IsTrue(board.Move(4, 0, 3, 0, checkIfKingIsInCheck, checkStateAfterMove));
 
             // Black advances two squares
-            Assert.IsTrue(board.Move(1, 1, 3, 1, lazy));
+            Assert.IsTrue(board.Move(1, 1, 3, 1, checkIfKingIsInCheck, checkStateAfterMove));
 
             // White makes another move, invalidating en passant
-            Assert.IsTrue(board.Move(6, 2, 5, 2, lazy));
+            Assert.IsTrue(board.Move(6, 2, 5, 2, checkIfKingIsInCheck, checkStateAfterMove));
+
+            // And another.
+            Assert.IsTrue(board.Move(5, 2, 4, 2, checkIfKingIsInCheck, checkStateAfterMove));
+
+            // ..and another
+            Assert.IsTrue(board.Move(6, 5, 5, 5, checkIfKingIsInCheck, checkStateAfterMove));
 
             // En passant not possible.
-            Assert.IsFalse(board.Move(3, 0, 2, 1, lazy));
+            Assert.IsFalse(board.Move(3, 0, 2, 1, checkIfKingIsInCheck, checkStateAfterMove));
+
+            // Ensure Undo works.
+            board.Undo();
+            board.Undo();
+            board.Undo();
+
+            // En passant should now be possible.
+            Assert.IsTrue(board.Move(3, 0, 2, 1, checkIfKingIsInCheck, checkStateAfterMove));
         }
 
         // FIDE 3.5 "[...] the bishop [...] may not move over any intervening pieces."
@@ -130,10 +146,10 @@ namespace Tests {
             Assert.IsFalse(board.Move(0, 2, 2, 0));
 
             // Move a pawn so it can open
-            Assert.IsTrue(board.Move(1, 3, 2, 3, true));
+            Assert.IsTrue(board.Move(1, 3, 2, 3));
 
             // Move diagonal
-            Assert.IsTrue(board.Move(0, 2, 3, 5, true));
+            Assert.IsTrue(board.Move(0, 2, 3, 5));
             Assert.IsNull(board.Pieces[0, 2]);
             {
                 var bishop = board.Pieces[3, 5];
@@ -738,12 +754,12 @@ namespace Tests {
             Assert.IsTrue(board.Move(0, 6, 2, 5));
 
             // Move the bishop
-            Assert.IsTrue(board.Move(0, 5, 2, 7, true));
+            Assert.IsTrue(board.Move(0, 5, 2, 7));
 
             var boardStateBefore = board.ToString();
 
             // Now *castle*, baby.
-            Assert.IsTrue(board.Move(blackKingSideCastle, true));
+            Assert.IsTrue(board.Move(blackKingSideCastle));
 
             // Still there, bishop?
             var bishop = board.Pieces[2, 7];
@@ -763,10 +779,12 @@ namespace Tests {
             var board = new ChessBoard(true);
 
             // Board state is Black King at 0,0, White Rook at 1,3, White Bishop at 5,6, White King at 6,2, Black Pawn at 7,1,
-            board.CreatePiece(ChessPiece.EName.King, 0, 0, ChessPiece.EColour.Black);
+            var blackKing = board.CreatePiece(ChessPiece.EName.King, 0, 0, ChessPiece.EColour.Black);
             board.CreatePiece(ChessPiece.EName.Rook, 1, 3, ChessPiece.EColour.White);
+            board.BlackKing = (King)blackKing;
             board.CreatePiece(ChessPiece.EName.Bishop, 5, 6, ChessPiece.EColour.White);
-            board.CreatePiece(ChessPiece.EName.King, 6, 2, ChessPiece.EColour.White);
+            var whiteKing = board.CreatePiece(ChessPiece.EName.King, 6, 2, ChessPiece.EColour.White);
+            board.WhiteKing = (King)whiteKing;
             board.CreatePiece(ChessPiece.EName.Pawn, 7, 1, ChessPiece.EColour.White);
             board.UpdateBoardStatus();
 
