@@ -47,8 +47,11 @@ public class Pawn : ChessPiece {
                 // Logger.Log("Pawn", $"Pawn can move diagonally to {toRow},{toColumn} as there is a piece on that square: {pieceOnSquare}");
                 return true;
             } else {
-                // Check if this is en passant
-                if (IsEnPassant(toRow, toColumn, pieces)) return true;
+                // Check if this is an en passant capture
+                if (IsEnPassantCapture(toRow, toColumn, pieces)) {
+                    move.IsEnPassantCapture = true;
+                    return true;
+                }
 
                 // Logger.Log($"Pawn cannot move to {toRow},{toColumn} as there is no piece on that square");
                 return false;
@@ -95,7 +98,7 @@ public class Pawn : ChessPiece {
     // A pawn attacking a square crossed by an opponent’s pawn which has advanced two
     // squares in one move from its original square may capture this opponent’s pawn as
     // though the latter had been moved only one square. 
-    private bool IsEnPassant(int toRow, int toColumn, ChessPiece[,] pieces) {
+    private bool IsEnPassantCapture(int toRow, int toColumn, ChessPiece[,] pieces) {
         // First, find the EnPassant square.
         var enPassantRow = GetEnPassantRow(toRow);
         var piece = pieces[enPassantRow, toColumn];
@@ -113,7 +116,7 @@ public class Pawn : ChessPiece {
         return true;
     }
 
-    int GetEnPassantRow(int toRow) {
+    public int GetEnPassantRow(int toRow) {
         var backwardsOneSquare = IsBlack() ? 1 : -1;
         var enPassantRow = toRow - backwardsOneSquare;
         return enPassantRow;

@@ -67,7 +67,13 @@ public class PGNParser {
                 try {
                     parseLine(line, moves);
                 } catch (System.Exception e) {
-                    Logger.Log("ERROR", $"Error parsing on line {lineNumber}: {line}: {e}");
+                    Logger.Log("ERROR", $"Error parsing on line {lineNumber}: {line}.");
+                    Logger.Log("ERROR", $"Board state is {board}");
+                    Logger.Log("ERROR", $"Valid moves are:");
+                    foreach (var move in board.ValidMoves[ChessPiece.EColour.Black]) {
+                        Logger.Log("ERROR", move.ToString());
+                    }
+                    Logger.Log("ERROR", e.ToString());
                     throw e;
                 }
             }
@@ -106,6 +112,7 @@ public class PGNParser {
             blackMoveString = split[1];
 
             var whiteMove = parseMoveString(whiteMoveString, ChessPiece.EColour.White);
+            Logger.Log("PGN", $"{whiteMoveString} is {whiteMove}");
             if (!board.Move(whiteMove)) throw new System.Exception($"Attempted to make invalid move: {whiteMove}");
             moves.Add(whiteMove);
 
@@ -113,6 +120,7 @@ public class PGNParser {
             if (blackMoveString == "") return;
 
             var blackMove = parseMoveString(blackMoveString, ChessPiece.EColour.Black);
+            Logger.Log("PGN", $"{blackMoveString} is {blackMove}");
             if (!board.Move(blackMove)) throw new System.Exception($"Attempted to make invalid move: {blackMove}");
             moves.Add(blackMove);
         }
