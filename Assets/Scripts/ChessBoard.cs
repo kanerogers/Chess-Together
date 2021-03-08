@@ -88,6 +88,13 @@ public class ChessBoard {
 
         // Before we can update the state, we need to stash the move away.
         var removedPiece = move.IsPromotion() ? piece : Pieces[toRow, toColumn];
+
+        // If this was an enpassant capture, the piece is at a different location.
+        if (move.IsEnPassantCapture) {
+            removedPiece = PawnThatCanBeCapturedWithEnpassant;
+            // Logger.Log("EP", $"Removed piece is {removedPiece}");
+        }
+
         UndoStack.Push((move, removedPiece));
 
         // Update state.
@@ -194,8 +201,7 @@ public class ChessBoard {
                     // Check to see if this move is a pawn promotion.
                     bool isPromotion = false;
                     if (piece.Name == ChessPiece.EName.Pawn) {
-                        var pawn = (Pawn)piece;
-                        isPromotion = pawn.IsPromotion(toRow, toColumn);
+                        isPromotion = ((Pawn)piece).IsPromotion(toRow, toColumn);
                     }
 
                     // If it is a promotion, we have to add all the promotion possibilities.
@@ -254,7 +260,7 @@ public class ChessBoard {
         var piece = Pieces[fromRow, fromColumn];
 
         // If this was the first time the piece moved, set that flag on Move
-        if (!piece.HasMoved) move.firstMoved = true;
+        if (!piece.HasMoved) move.FirstMoved = true;
 
         // Update the piece's bookkeeping
         piece.UpdateState(move);
@@ -263,7 +269,12 @@ public class ChessBoard {
         Pieces[toRow, toColumn] = piece;
         Pieces[fromRow, fromColumn] = null;
 
-        if (move.isCastling) {
+        if (move.IsEnPassantCapture) {
+            var enPassantRow = ((Pawn)piece).GetEnPassantRow(toRow);
+            Pieces[enPassantRow, toColumn] = null;
+        }
+
+        if (move.IsCastling) {
             DoCastle(move);
         }
     }
@@ -279,7 +290,7 @@ public class ChessBoard {
         var movedPiece = Pieces[toRow, toColumn];
 
         // If this was a castle, undo that too.
-        if (lastMove.isCastling) {
+        if (lastMove.IsCastling) {
             UndoCastle(toRow, toColumn);
         }
 
@@ -288,6 +299,16 @@ public class ChessBoard {
 
         // Put the piece back where it was
         Pieces[fromRow, fromColumn] = movedPiece;
+
+        // If this was an en passant, the piece is in a different place.
+        if (lastMove.IsEnPassantCapture) {
+            // First, remove the pawn that moved there.
+            Pieces[toRow, toColumn] = null;
+
+            // Next, find where it should go.
+            toRow = removedPiece.Row;
+            // Logger.Log("EP", $"Restoring {removedPiece} to {toRow},{toColumn}");
+        }
 
         // If a piece was removed, put it back.
         Pieces[toRow, toColumn] = removedPiece;

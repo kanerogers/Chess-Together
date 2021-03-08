@@ -104,7 +104,11 @@ namespace Tests {
             Assert.IsTrue(board.Move(1, 1, 3, 1, checkIfKingIsInCheck, checkStateAfterMove));
 
             // En passant capture
+            Logger.Log($"board state: {board}");
             Assert.IsTrue(board.Move(3, 0, 2, 1, checkIfKingIsInCheck, checkStateAfterMove));
+
+            // Ensure it was captured
+            Assert.IsNull(board.Pieces[3, 1]);
 
             // This capture is only legal on the move following this advance..
             board = new ChessBoard();
@@ -135,6 +139,9 @@ namespace Tests {
 
             // En passant should now be possible.
             Assert.IsTrue(board.Move(3, 0, 2, 1, checkIfKingIsInCheck, checkStateAfterMove));
+
+            // Ensure it was captured
+            Assert.IsNull(board.Pieces[3, 1]);
         }
 
         // FIDE 3.5 "[...] the bishop [...] may not move over any intervening pieces."

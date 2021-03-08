@@ -267,7 +267,7 @@ public class SceneChessBoard : MonoBehaviour {
         }
     }
 
-    private bool IsCastling() => LogicBoard.UndoStack.Peek().Item1.isCastling;
+    private bool IsCastling() => LogicBoard.UndoStack.Peek().Item1.IsCastling;
 
     IEnumerator RemovePiece(GameObject obj, float movementDuration) {
         Debug.Log($"Removing {obj.GetComponent<SceneChessPiece>().Piece}");
