@@ -41,7 +41,7 @@ public abstract class ChessPiece {
         Row = fromRow;
         Column = fromColumn;
 
-        if (lastMove.firstMoved) HasMoved = false;
+        if (lastMove.FirstMoved) HasMoved = false;
     }
 
     public abstract int GetScore();

@@ -14,7 +14,7 @@ public class King : ChessPiece {
         // There are two different ways of moving the king: by moving to any adjoining square
         // or by castling.
         if (IsCastling(pieces, move)) {
-            move.isCastling = true;
+            move.IsCastling = true;
             return true;
         }
 

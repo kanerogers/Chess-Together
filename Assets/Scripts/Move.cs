@@ -9,8 +9,9 @@ public class Move : IEquatable<Move> {
     public int ToColumn;
     public int Score;
     public string Player;
-    public bool isCastling;
-    public bool firstMoved;
+    public bool IsCastling;
+    public bool FirstMoved;
+    public bool IsEnPassantCapture;
     public ChessPiece.EName PieceToPromoteTo;
     public (Pawn, Pawn) PreviousEnPassantState;
 
