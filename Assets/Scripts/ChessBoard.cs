@@ -91,7 +91,8 @@ public class ChessBoard {
 
         // If this was an enpassant capture, the piece is at a different location.
         if (move.IsEnPassantCapture) {
-            removedPiece = PawnThatCanBeCapturedWithEnpassant;
+            var enPessantRow = ((Pawn)piece).GetEnPassantRow(toRow);
+            removedPiece = Pieces[enPessantRow, toColumn];
             // Logger.Log("EP", $"Removed piece is {removedPiece}");
         }
 
@@ -185,58 +186,63 @@ public class ChessBoard {
         ValidMoves[ChessPiece.EColour.White].Clear();
 
         // Iterate through all pieces on the board and check their valid moves.
-        foreach (var piece in Pieces) {
-            if (piece == null) continue;
-            var colour = piece.Colour;
+        for (int fromRow = 0; fromRow < 8; fromRow++) {
+            for (int fromColumn = 0; fromColumn < 8; fromColumn++) {
+                var piece = Pieces[fromRow, fromColumn];
+                if (piece == null) continue;
+                var colour = piece.Colour;
 
-            for (int toRow = 0; toRow < 8; toRow++) {
-                for (int toColumn = 0; toColumn < 8; toColumn++) {
-                    var move = new Move(piece.Row, piece.Column, toRow, toColumn);
+                if (piece.Row != fromRow) throw new Exception($"INVALID STATE: {piece} should have its row set to {fromRow}!!");
+                if (piece.Column != fromColumn) throw new Exception($"INVALID STATE: {piece} should have its column set to {fromColumn}!!");
 
-                    // If this move is invalid, continue.
-                    if (!Move(move, checkIfKingIsInCheck: true, checkStateAfterMove: false)) continue;
+                for (int toRow = 0; toRow < 8; toRow++) {
+                    for (int toColumn = 0; toColumn < 8; toColumn++) {
+                        var move = new Move(fromRow, fromColumn, toRow, toColumn);
 
-                    // WARNING: Move has been made, must call Undo before continue!
+                        // If this move is invalid, continue.
+                        if (!Move(move, checkIfKingIsInCheck: true, checkStateAfterMove: false)) continue;
 
-                    // Check to see if this move is a pawn promotion.
-                    bool isPromotion = false;
-                    if (piece.Name == ChessPiece.EName.Pawn) {
-                        isPromotion = ((Pawn)piece).IsPromotion(toRow, toColumn);
-                    }
+                        // WARNING: Move has been made, must call Undo before continue!
 
-                    // If it is a promotion, we have to add all the promotion possibilities.
-                    // TODO: Extract to method on Pawn?
-                    if (isPromotion) {
-                        var fromRow = move.FromRow;
-                        // FIDE 3.7e - ..
-                        // exchanged as part of the same move on the same square for a new queen, rook,
-                        // bishop or knight of the same colour.
-                        move = new Move(fromRow, piece.Column, toRow, toColumn, ChessPiece.EName.Bishop);
-                        ValidMoves[colour].Add(move);
-                        move = new Move(fromRow, piece.Column, toRow, toColumn, ChessPiece.EName.Rook);
-                        ValidMoves[colour].Add(move);
-                        move = new Move(fromRow, piece.Column, toRow, toColumn, ChessPiece.EName.Queen);
-                        ValidMoves[colour].Add(move);
-                        move = new Move(fromRow, piece.Column, toRow, toColumn, ChessPiece.EName.Knight);
-                        ValidMoves[colour].Add(move);
-                    } else {
-                        ValidMoves[colour].Add(move);
-                    }
+                        // Check to see if this move is a pawn promotion.
+                        bool isPromotion = false;
+                        if (piece.Name == ChessPiece.EName.Pawn) {
+                            isPromotion = ((Pawn)piece).IsPromotion(toRow, toColumn);
+                        }
 
-                    // If the King is not in check, there is no need to evaluate if this is checkmate.
-                    if (State[colour] == BoardStatus.NotInCheck) {
+                        // If it is a promotion, we have to add all the promotion possibilities.
+                        // TODO: Extract to method on Pawn?
+                        if (isPromotion) {
+                            // FIDE 3.7e - ..
+                            // exchanged as part of the same move on the same square for a new queen, rook,
+                            // bishop or knight of the same colour.
+                            move = new Move(fromRow, fromColumn, toRow, toColumn, ChessPiece.EName.Bishop);
+                            ValidMoves[colour].Add(move);
+                            move = new Move(fromRow, fromColumn, toRow, toColumn, ChessPiece.EName.Rook);
+                            ValidMoves[colour].Add(move);
+                            move = new Move(fromRow, fromColumn, toRow, toColumn, ChessPiece.EName.Queen);
+                            ValidMoves[colour].Add(move);
+                            move = new Move(fromRow, fromColumn, toRow, toColumn, ChessPiece.EName.Knight);
+                            ValidMoves[colour].Add(move);
+                        } else {
+                            ValidMoves[colour].Add(move);
+                        }
+
+                        // If the King is not in check, there is no need to evaluate if this is checkmate.
+                        if (State[colour] == BoardStatus.NotInCheck) {
+                            Undo();
+                            continue;
+                        }
+
+                        var king = colour == ChessPiece.EColour.Black ? BlackKing : WhiteKing;
+
+                        // If this move would put the King out of check, then we know that they're 
+                        // not in Checkmate.
+                        if (!king.IsInCheck(Pieces)) {
+                            State[colour] = BoardStatus.Check;
+                        }
                         Undo();
-                        continue;
                     }
-
-                    var king = colour == ChessPiece.EColour.Black ? BlackKing : WhiteKing;
-
-                    // If this move would put the King out of check, then we know that they're 
-                    // not in Checkmate.
-                    if (!king.IsInCheck(Pieces)) {
-                        State[colour] = BoardStatus.Check;
-                    }
-                    Undo();
                 }
             }
         }
@@ -271,6 +277,7 @@ public class ChessBoard {
 
         if (move.IsEnPassantCapture) {
             var enPassantRow = ((Pawn)piece).GetEnPassantRow(toRow);
+            // Logger.Log($"Setting {enPassantRow},{toColumn} to null");
             Pieces[enPassantRow, toColumn] = null;
         }
 
