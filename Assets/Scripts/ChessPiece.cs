@@ -7,30 +7,41 @@ public abstract class ChessPiece {
     public int Column;
     public bool HasMoved;
 
-    public virtual bool CheckMove(ChessPiece[,] pieces, int row, int column) {
-        if (row == Row && column == Column) {
+    public virtual bool CheckMove(ChessPiece[,] pieces, Move move) {
+        var (_, _, toRow, toColumn) = move.ToCoordinates();
+
+        if (toRow == Row && toColumn == Column) {
+            // Logger.Log("Moves", $"Move {move} is invalid. Can't move to same square");
             return false;
         }
 
-        if (row > 7 || row < 0) {
+        if (toRow > 7 || toRow < 0) {
             return false;
         }
-        if (column > 7 || column < 0) {
-            // Logger.Log("Moves", "Invalid column " + column);
+        if (toColumn > 7 || toColumn < 0) {
+            // Logger.Log("Moves", $"Move {move} is invalid. Invalid column {toColumn}");
             return false;
         }
 
-        ChessPiece piece = pieces[row, column];
+        ChessPiece piece = pieces[toRow, toColumn];
 
         if (piece != null) {
             // FIDE 3.1 It is not permitted to move a piece to a square occupied by a piece of the same colour.
             if (piece.Colour == Colour) {
-                // Logger.Log("Moves", $"Unable to move {Name} to {row},{column}. This space is occupied by {piece}");
+                // Logger.Log("Moves", $"Move {move} is invalid. {piece} is the same colour as {this}");
                 return false;
             }
         }
 
         return true;
+    }
+
+    public virtual void Undo(Move lastMove) {
+        var (fromRow, fromColumn, _, _) = lastMove.ToCoordinates();
+        Row = fromRow;
+        Column = fromColumn;
+
+        if (lastMove.FirstMoved) HasMoved = false;
     }
 
     public abstract int GetScore();
@@ -85,6 +96,14 @@ public abstract class ChessPiece {
         var b = Math.Abs(toColumn - Column);
         return a == b;
     }
+
+    public virtual void UpdateState(Move move) {
+        var (_, _, toRow, toColumn) = move.ToCoordinates();
+        Row = toRow;
+        Column = toColumn;
+        HasMoved = true;
+    }
+
     public bool IsRankOrFile(int toRow, int toColumn) {
         return (Row == toRow || Column == toColumn);
     }
@@ -111,6 +130,7 @@ public abstract class ChessPiece {
     }
 
     public enum EName {
+        None, // Annoyingly necessary because of Move.PieceToPromoteTo
         Rook,
         Knight,
         King,

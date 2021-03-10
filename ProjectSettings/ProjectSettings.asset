@@ -125,14 +125,12 @@ PlayerSettings:
     16:10: 1
     16:9: 1
     Others: 1
-  bundleVersion: 0.4
+  bundleVersion: 0.4.2
   preloadedAssets:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  - {fileID: 7559336825330897227, guid: 863121c7c97094f52aaf6f2883523fb5, type: 2}
-  - {fileID: 11400000, guid: b48d68a8c2f73894f9ce5c2c7f4a310f, type: 2}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -179,7 +177,7 @@ PlayerSettings:
     Standalone: name.kanerogers.ChessTogether
   buildNumber:
     Standalone: 2
-  AndroidBundleVersionCode: 1
+  AndroidBundleVersionCode: 2
   AndroidMinSdkVersion: 25
   AndroidTargetSdkVersion: 0
   AndroidPreferredInstallLocation: 0

@@ -9,14 +9,25 @@ public class Move : IEquatable<Move> {
     public int ToColumn;
     public int Score;
     public string Player;
-    public bool isCastling;
-    public bool firstMoved;
+    public bool IsCastling;
+    public bool FirstMoved;
+    public bool IsEnPassantCapture;
+    public ChessPiece.EName PieceToPromoteTo;
+    public (Pawn, Pawn) PreviousEnPassantState;
 
     public Move(int fromRow, int fromColumn, int toRow, int toColumn) {
         FromRow = fromRow;
         FromColumn = fromColumn;
         ToRow = toRow;
         ToColumn = toColumn;
+    }
+
+    public Move(int fromRow, int fromColumn, int toRow, int toColumn, ChessPiece.EName pieceToPromoteTo) {
+        FromRow = fromRow;
+        FromColumn = fromColumn;
+        ToRow = toRow;
+        ToColumn = toColumn;
+        PieceToPromoteTo = pieceToPromoteTo;
     }
 
     public Move(int fromRow, int fromColumn, int toRow, int toColumn, int score) {
@@ -37,7 +48,15 @@ public class Move : IEquatable<Move> {
     }
 
     public override string ToString() {
-        return $"Move {Sequence}: {FromRow},{FromColumn} to {ToRow},{ToColumn}. Score: {Score}";
+        if (PieceToPromoteTo == 0) {
+            return $"Sequence {Sequence}: {FromRow},{FromColumn} to {ToRow},{ToColumn}. Score: {Score}";
+        } else {
+            return $"Sequence {Sequence}: {FromRow},{FromColumn} to {ToRow},{ToColumn}. Score: {Score}, Promote to: {PieceToPromoteTo}";
+        }
+    }
+
+    internal (int, int, int, int) ToCoordinates() {
+        return (FromRow, FromColumn, ToRow, ToColumn);
     }
 
     public Move(object obj) {
@@ -66,4 +85,6 @@ public class Move : IEquatable<Move> {
         if (move == null) return false;
         return (move.ToRow == ToRow && move.ToColumn == ToColumn && move.FromRow == FromRow && move.FromColumn == FromColumn);
     }
+
+    public bool IsPromotion() => PieceToPromoteTo != ChessPiece.EName.None;
 }
