@@ -43,9 +43,10 @@ public class PGNParser {
     static Regex scoreRegex = new Regex(@"\d\-\d", RegexOptions.Compiled);
     int lineNumber = 0;
 
-    public List<Move> GetMoves() {
+    public List<List<Move>> Parse(int numGames = 0) {
         var inHeader = true;
         var games = new List<List<Move>>();
+        var gamesRead = -1;
         var moves = new List<Move>();
 
         // First, we need to skip through the header stuff and get to the moves.
@@ -57,6 +58,8 @@ public class PGNParser {
                 if (inHeader) continue;
                 else {
                     inHeader = true;
+                    gamesRead++;
+                    if (numGames != 0 && gamesRead >= numGames) return games;
                     board = new ChessBoard();
                     games.Add(moves);
                     moves = new List<Move>();
@@ -80,7 +83,7 @@ public class PGNParser {
 
         }
 
-        return moves;
+        return games;
     }
 
     void parseLine(string line, List<Move> moves) {
