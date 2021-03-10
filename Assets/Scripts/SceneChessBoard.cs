@@ -17,8 +17,8 @@ public class SceneChessBoard : MonoBehaviour {
     public GameObject[,] Pieces = new GameObject[8, 8];
     public ChessBoard LogicBoard;
     public GameManager GameManager;
-    public bool bigPieces = true;
-    public float scale = 5f;
+    public bool bigPieces = false;
+    public float scale = 1f;
     public Transform Pivot = null;
     public SceneChessPiece bishopPrefab;
     public SceneChessPiece kingPrefab;
@@ -135,6 +135,15 @@ public class SceneChessBoard : MonoBehaviour {
         float z = top - (toRow * space) - piecePadding;
         return new Vector3(x, 0, z) * scale;
     }
+
+    public (int row, int column) GetPositionForCoordinates(Vector3 point) {
+        point /= scale;
+        int row = Mathf.FloorToInt((top - point.z) / space);
+        var col = Math.Abs(Mathf.CeilToInt((left - point.x) / space));
+
+        return (row, col);
+    }
+
     private void MoveCastle(SceneChessPiece king, int toRow, int toColumn) {
         var (fromRow, fromColumn) = (king.Piece.Row, king.Piece.Column);
         EventManager.DeselectedPiece(fromRow, fromColumn);

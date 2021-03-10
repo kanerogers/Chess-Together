@@ -92,7 +92,7 @@ GameObject:
   - component: {fileID: 225609368}
   - component: {fileID: 225609369}
   m_Layer: 9
-  m_Name: Right Button
+  m_Name: Right Button Anchor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -325,7 +325,7 @@ GameObject:
   - component: {fileID: 816133520}
   - component: {fileID: 816133519}
   m_Layer: 9
-  m_Name: Button
+  m_Name: Back Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -647,7 +647,7 @@ GameObject:
   - component: {fileID: 1298863724}
   - component: {fileID: 1298863723}
   m_Layer: 9
-  m_Name: Button
+  m_Name: Right Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -755,7 +755,7 @@ SpringJoint:
   m_ConnectedBody: {fileID: 225609369}
   m_Anchor: {x: 0, y: 0.5, z: 0}
   m_AutoConfigureConnectedAnchor: 1
-  m_ConnectedAnchor: {x: -0.00000007264317, y: 0.50000006, z: -0.02000004}
+  m_ConnectedAnchor: {x: 0.00000007636845, y: 0.49999997, z: -0.02000004}
   serializedVersion: 2
   m_Spring: 100
   m_Damper: 10
@@ -888,7 +888,7 @@ GameObject:
   - component: {fileID: 1452463743}
   - component: {fileID: 1452463744}
   m_Layer: 9
-  m_Name: Back Button
+  m_Name: Back Button Anchor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -936,7 +936,7 @@ GameObject:
   - component: {fileID: 1557633609}
   - component: {fileID: 1557633610}
   m_Layer: 9
-  m_Name: Left Button
+  m_Name: Left Button Anchor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1019,7 +1019,7 @@ GameObject:
   - component: {fileID: 4362539896274293103}
   - component: {fileID: 4362539896274293102}
   m_Layer: 9
-  m_Name: Button
+  m_Name: Left Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1127,7 +1127,7 @@ SpringJoint:
   m_ConnectedBody: {fileID: 1557633610}
   m_Anchor: {x: 0, y: 0.5, z: 0}
   m_AutoConfigureConnectedAnchor: 1
-  m_ConnectedAnchor: {x: -0.000000074505785, y: 0.50000006, z: -0.00000023841858}
+  m_ConnectedAnchor: {x: 0.000000074505806, y: 0.49999997, z: -0.000000059604645}
   serializedVersion: 2
   m_Spring: 100
   m_Damper: 10
@@ -1300,7 +1300,7 @@ MonoBehaviour:
   White: {fileID: 2100000, guid: 3b09e92a8bc914ec681f9d941b9cb8b2, type: 2}
   GameManager: {fileID: 0}
   bigPieces: 0
-  scale: 5
+  scale: 1
   Pivot: {fileID: 2242370506958628856}
   bishopPrefab: {fileID: 2203753763930081510, guid: 2f9026a9b33694763a6b54fe4e8d3092,
     type: 3}
@@ -1314,7 +1314,7 @@ MonoBehaviour:
     type: 3}
   knightPrefab: {fileID: -1876045100632721804, guid: 85e41081ef9774c22b75bfc26d462da6,
     type: 3}
-  boardInterfaceManager: {fileID: 0}
+  boardInterfaceManager: {fileID: 7769078299581570797}
 --- !u!65 &7769078299581570799
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1352,4 +1352,5 @@ MonoBehaviour:
   RightButton: {fileID: 148203340}
   ChessBoardScreen: {fileID: 864471450}
   typingSpeed: 0.1
+  GameManager: {fileID: 0}
   currentState: 0

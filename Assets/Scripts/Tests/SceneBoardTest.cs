@@ -202,7 +202,7 @@ namespace Tests {
             piece = board.Pieces[5, 0].GetComponent<SceneChessPiece>();
             yield return new WaitForSeconds(board.MovementDuration + 0.1f);
             var expectedPosition = board.CoordinatesForPosition(5, 0);
-            Assert.AreEqual(piece.transform.localPosition, expectedPosition);
+            Assert.AreEqual(expectedPosition, piece.transform.localPosition);
         }
 
         [UnityTest]

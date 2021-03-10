@@ -2191,14 +2191,6 @@ PrefabInstance:
       propertyPath: m_Camera
       value: 
       objectReference: {fileID: 400583625}
-    - target: {fileID: 1298863724, guid: 4720bf39ebe6742babb4e9e2c7104e9b, type: 3}
-      propertyPath: m_ConnectedAnchor.x
-      value: 0.00000007636845
-      objectReference: {fileID: 0}
-    - target: {fileID: 1298863724, guid: 4720bf39ebe6742babb4e9e2c7104e9b, type: 3}
-      propertyPath: m_ConnectedAnchor.y
-      value: 0.49999997
-      objectReference: {fileID: 0}
     - target: {fileID: 1721218399952358423, guid: 4720bf39ebe6742babb4e9e2c7104e9b,
         type: 3}
       propertyPath: m_RootOrder
@@ -2254,26 +2246,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 4362539896274293103, guid: 4720bf39ebe6742babb4e9e2c7104e9b,
-        type: 3}
-      propertyPath: m_ConnectedAnchor.x
-      value: 0.000000074505806
-      objectReference: {fileID: 0}
-    - target: {fileID: 4362539896274293103, guid: 4720bf39ebe6742babb4e9e2c7104e9b,
-        type: 3}
-      propertyPath: m_ConnectedAnchor.y
-      value: 0.49999997
-      objectReference: {fileID: 0}
-    - target: {fileID: 4362539896274293103, guid: 4720bf39ebe6742babb4e9e2c7104e9b,
-        type: 3}
-      propertyPath: m_ConnectedAnchor.z
-      value: -0.000000059604645
-      objectReference: {fileID: 0}
-    - target: {fileID: 7769078299581570796, guid: 4720bf39ebe6742babb4e9e2c7104e9b,
-        type: 3}
-      propertyPath: boardInterfaceManager
-      value: 
-      objectReference: {fileID: 8417174469398627611}
     - target: {fileID: 7769078299581570797, guid: 4720bf39ebe6742babb4e9e2c7104e9b,
         type: 3}
       propertyPath: GameManager
