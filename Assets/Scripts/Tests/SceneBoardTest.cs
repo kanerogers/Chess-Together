@@ -16,7 +16,6 @@ namespace Tests {
 
             GameObject gameGameObject = MonoBehaviour.Instantiate(Resources.Load<GameObject>("Prefabs/Chess Board"));
             BoardInterfaceManager bi = gameGameObject.GetComponent<BoardInterfaceManager>();
-            bi.enabled = false;
             var board = gameGameObject.GetComponent<SceneChessBoard>();
             board.InitializeBoard(new ChessBoard());
             return board;
@@ -194,6 +193,35 @@ namespace Tests {
             yield return new WaitForSeconds(board.MovementDuration + 0.1f);
             var expectedPosition = board.CoordinatesForPosition(2, 0);
             Assert.AreEqual(piece.transform.localPosition, expectedPosition);
+        }
+
+        [UnityTest]
+        public IEnumerator TestPromotion() {
+            var sceneBoard = GetBoard();
+            var bi = sceneBoard.GetComponent<BoardInterfaceManager>();
+            sceneBoard.boardInterfaceManager = bi;
+            var board = new ChessBoard(true);
+            board.CreatePiece(ChessPiece.EName.Pawn, 6, 0, ChessPiece.EColour.Black);
+            board.CreatePiece(ChessPiece.EName.Pawn, 1, 0, ChessPiece.EColour.White);
+            board.CreatePiece(ChessPiece.EName.King, 7, 4, ChessPiece.EColour.White);
+            board.CreatePiece(ChessPiece.EName.King, 0, 4, ChessPiece.EColour.Black);
+
+            board.BlackKing = (King)board.Pieces[0, 4];
+            board.WhiteKing = (King)board.Pieces[7, 4];
+            sceneBoard.LogicBoard = board;
+            sceneBoard.SetUpBoard();
+
+            var pawn = sceneBoard.Pieces[1, 0].GetComponent<SceneChessPiece>();
+            sceneBoard.Move(pawn, 0, 0);
+
+            Assert.AreEqual(bi.currentState, BoardInterfaceManager.State.ChoosingPieceToPromoteTo);
+            bi.LeftButtonPressed();
+            bi.RightButtonPressed();
+
+            yield return new WaitForSeconds(sceneBoard.MovementDuration + 0.1f);
+            var bishop = sceneBoard.Pieces[0, 0].GetComponent<SceneChessPiece>();
+            Assert.AreEqual(bishop.Piece.Name, ChessPiece.EName.Bishop);
+            yield return null;
         }
     }
 }

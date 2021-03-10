@@ -88,14 +88,14 @@ public static class AIManager {
         }
 
         var ourState = board.State[us];
-        if (ourState == ChessBoard.BoardState.Checkmate) {
+        if (ourState == ChessBoard.BoardStatus.Checkmate) {
             // Logger.Log("AI", $"Move {move} would put us into checkmate");
             board.Undo();
             return (-CHECKMATE_MOVE, depthReached);
         }
 
         var enemyState = board.State[them];
-        if (enemyState == ChessBoard.BoardState.Checkmate) {
+        if (enemyState == ChessBoard.BoardStatus.Checkmate) {
             // Logger.Log("AI", $"Move {move} would put the enemy into checkmate: {board}");
             board.Undo();
             return (CHECKMATE_MOVE, depthReached);
@@ -136,20 +136,21 @@ public static class AIManager {
     }
 
     static int EvaluateMove(ChessBoard board, Move move, ChessPiece.EColour us, ChessPiece.EColour them, ChessPiece.EColour canMove) {
+        // Logger.Log("AI", $"AI Manager evaluating {move}");
         if (!board.Move(move)) {
             throw new System.Exception($"Attempted to make invalid move {move} with board state {board}");
         }
 
         var ourState = board.State[us];
-        if (ourState == ChessBoard.BoardState.Check) {
+        if (ourState == ChessBoard.BoardStatus.Check) {
             return -CHECK_MOVE;
         }
-        if (ourState == ChessBoard.BoardState.Checkmate) {
+        if (ourState == ChessBoard.BoardStatus.Checkmate) {
             return -CHECKMATE_MOVE;
         }
 
         var enemyState = board.State[them];
-        if (enemyState == ChessBoard.BoardState.Checkmate) {
+        if (enemyState == ChessBoard.BoardStatus.Checkmate) {
             return CHECKMATE_MOVE;
         }
 

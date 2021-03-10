@@ -1,19 +1,18 @@
 using System;
-public class Pawn : ChessPiece
-{
-    public Pawn(EColour colour, int row, int column)
-    {
+public class Pawn : ChessPiece {
+    public bool CanBeCapturedByEnpassant = false;
+
+    public Pawn(EColour colour, int row, int column) {
         Colour = colour;
         Name = EName.Pawn;
         Row = row;
         Column = column;
     }
 
-    public override bool CheckMove(ChessPiece[,] pieces, int toRow, int toColumn)
-    {
+    public override bool CheckMove(ChessPiece[,] pieces, Move move) {
+        var (_, _, toRow, toColumn) = move.ToCoordinates();
         // Check basic constraints first
-        if (!base.CheckMove(pieces, toRow, toColumn))
-        {
+        if (!base.CheckMove(pieces, move)) {
             return false;
         }
 
@@ -21,9 +20,8 @@ public class Pawn : ChessPiece
 
         // FIDE 3.7.a
         // Pawn cannot move backwards, or more than 2 forwards.
-        if (forward < 1 || forward > 2)
-        {
-            // Debug.Log($"Pawn at {Row},{Column} cannot move to {toRow},{toColumn} as forward is {forward}");
+        if (forward < 1 || forward > 2) {
+            // Logger.Log($"Pawn at {Row},{Column} cannot move to {toRow},{toColumn} as forward is {forward}");
             return false;
         }
 
@@ -32,30 +30,30 @@ public class Pawn : ChessPiece
         // diagonally in front of it on an adjacent file, capturing that piece."
         var pieceOnSquare = pieces[toRow, toColumn];
 
-        if (toColumn != Column)
-        {
+        if (toColumn != Column) {
             int delta = Math.Abs(toColumn - Column);
-            if (delta != 1)
-            {
-                // Debug.Log($"Pawn at {Row},{Column} cannot move to {toRow},{toColumn} as the column delta is {delta}");
+            if (delta != 1) {
+                // Logger.Log($"Pawn at {Row},{Column} cannot move to {toRow},{toColumn} as the column delta is {delta}");
                 return false;
             }
 
-            if (forward != 1)
-            {
-                // Debug.Log($"Pawn at {Row},{Column} cannot move to {toRow},{toColumn} as the column is not the same but forward is {forward}.");
+            if (forward != 1) {
+                // Logger.Log($"Pawn at {Row},{Column} cannot move to {toRow},{toColumn} as the column is not the same but forward is {forward}.");
                 return false;
             }
 
             // Check if there is a piece on this diagonal
-            if (pieceOnSquare != null)
-            {
-                // Debug.Log($"Pawn can move diagonally to {toRow},{toColumn} as there is a piece on that square");
+            if (pieceOnSquare != null) {
+                // Logger.Log("Pawn", $"Pawn can move diagonally to {toRow},{toColumn} as there is a piece on that square: {pieceOnSquare}");
                 return true;
-            }
-            else
-            {
-                // Debug.Log($"Pawn cannot move to {toRow},{toColumn} as there is no piece on that square");
+            } else {
+                // Check if this is an en passant capture
+                if (IsEnPassantCapture(toRow, toColumn, pieces)) {
+                    move.IsEnPassantCapture = true;
+                    return true;
+                }
+
+                // Logger.Log($"Pawn cannot move to {toRow},{toColumn} as there is no piece on that square");
                 return false;
             }
         }
@@ -63,49 +61,84 @@ public class Pawn : ChessPiece
         // We have proven that we are moving forward 1 or 2 squares.
 
         // Next, ensure there is no piece on that square
-        if (pieceOnSquare != null)
-        {
-            // Debug.Log($"Pawn cannot move to {toRow},{toColumn} as there is a piece on that square");
+        if (pieceOnSquare != null) {
+            // Logger.Log($"Pawn cannot move to {toRow},{toColumn} as there is a piece on that square");
             return false;
         }
 
         // FIDE 3.7.b
         // "on its first move the pawn [...] may advance two squares along the same file"
-        if (forward == 2)
-        {
-            if (!OnStartingRow())
-            {
-                // Debug.Log($"Pawn cannot move to {toRow},{toColumn} as it is not on the starting row.");
+        if (forward == 2) {
+            if (!OnStartingRow()) {
+                // Logger.Log($"Pawn cannot move to {toRow},{toColumn} as it is not on the starting row.");
                 return false;
             }
 
             // "..provided both squares are unoccupied"
-            if (HasPiecesOnInterveningSquares(pieces, toRow, toColumn))
-            {
-                // Debug.Log($"Pawn cannot move to {toRow},{toColumn} as there is a piece in the way.");
+            if (HasPiecesOnInterveningSquares(pieces, toRow, toColumn)) {
+                // Logger.Log($"Pawn cannot move to {toRow},{toColumn} as there is a piece in the way.");
                 return false;
             }
-        }
 
-        // TODO: FIDE 3.7e - Promotion
+            // Set the CanBeCapturedByEnPassant flag
+            // Logger.Log("PAWN", $"Setting enPassant flag for {toRow},{toColumn} to true");
+        }
 
         return true;
     }
 
-    bool OnStartingRow()
-    {
+    public override void UpdateState(Move move) {
+        var (_, _, toRow, _) = move.ToCoordinates();
+        var forward = GetForward(toRow);
+        base.UpdateState(move);
+        if (forward == 2) CanBeCapturedByEnpassant = true;
+    }
+
+    // FIDE 3.7d
+    // A pawn attacking a square crossed by an opponent’s pawn which has advanced two
+    // squares in one move from its original square may capture this opponent’s pawn as
+    // though the latter had been moved only one square. 
+    private bool IsEnPassantCapture(int toRow, int toColumn, ChessPiece[,] pieces) {
+        // First, find the EnPassant square.
+        var enPassantRow = GetEnPassantRow(toRow);
+        var piece = pieces[enPassantRow, toColumn];
+        if (piece == null) return false;
+
+        if (piece.Name != ChessPiece.EName.Pawn || piece.Colour == Colour) return false;
+
+        var pawn = (Pawn)piece;
+        // "..This capture is only legal on the move following this advance"
+        if (!pawn.CanBeCapturedByEnpassant) {
+            // Logger.Log("EP", $"Unable to make en passant capture {toRow},{toColumn} - {piece} cannot be captured");
+            return false;
+        }
+
+        return true;
+    }
+
+    public int GetEnPassantRow(int toRow) {
+        var backwardsOneSquare = IsBlack() ? 1 : -1;
+        var enPassantRow = toRow - backwardsOneSquare;
+        return enPassantRow;
+    }
+
+    bool OnStartingRow() {
         if (Colour == ChessPiece.EColour.Black) return Row == 1;
         return Row == 6;
     }
 
-    int GetForward(int toRow)
-    {
+    int GetForward(int toRow) {
         if (IsBlack()) return toRow - Row;
         return Row - toRow;
     }
 
-    public override int GetScore()
-    {
+    public override int GetScore() {
         return 1;
+    }
+
+    public bool IsPromotion(int toRow, int toColumn) {
+        var promotionRow = IsBlack() ? 7 : 0;
+        var isPromotion = toRow == promotionRow;
+        return isPromotion;
     }
 }

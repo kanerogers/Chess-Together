@@ -12,6 +12,8 @@ public class BoardInterfaceManager : MonoBehaviour {
     public Sprite JoinIcon;
     public Sprite StartIcon;
     public Sprite BackIcon;
+    public Sprite ForwardIcon;
+    public Sprite ConfirmIcon;
     public SpriteRenderer BackButton;
     public SpriteRenderer LeftButton;
     public SpriteRenderer RightButton;
@@ -30,6 +32,7 @@ public class BoardInterfaceManager : MonoBehaviour {
         { State.ChoosingGameType, "Who would you like to play with?" },
         { State.StartingMultiplayerGame, "Would you like to create or join a game?" },
         { State.JoiningMultiplayerGame, "Enter the code your friend gave you" },
+        { State.ChoosingPieceToPromoteTo, "Promote this Pawn to a Queen?" },
     };
     string textToBeTyped;
     WaitForSeconds characterWaitTime;
@@ -37,6 +40,14 @@ public class BoardInterfaceManager : MonoBehaviour {
     private float backbuttonLastPressedTime;
     private float leftButtonLastPressedTime;
     private float rightButtonLastPressedTime;
+    private int promotionOptionsIndex = 0;
+    private ChessPiece.EName[] PromotionOptions = new ChessPiece.EName[4] {
+        ChessPiece.EName.Queen,
+        ChessPiece.EName.Bishop,
+        ChessPiece.EName.Rook,
+        ChessPiece.EName.Knight,
+    };
+    private State stateBeforePromotion;
     #endregion
 
     #region Unity Lifecycle
@@ -45,7 +56,8 @@ public class BoardInterfaceManager : MonoBehaviour {
         characterWaitTime = new WaitForSeconds(typingSpeed);
         icons = new Dictionary<State, (Sprite, Sprite, Sprite)> {
             { State.ChoosingGameType, (null, AIIcon, PersonIcon) },
-            { State.StartingMultiplayerGame, (BackIcon, StartIcon, JoinIcon) }
+            { State.StartingMultiplayerGame, (BackIcon, StartIcon, JoinIcon) },
+            { State.ChoosingPieceToPromoteTo, (BackIcon, ForwardIcon, ConfirmIcon) }
         };
     }
 
@@ -81,6 +93,9 @@ public class BoardInterfaceManager : MonoBehaviour {
         } else if (currentState == State.CreatingMultiplayerGame || currentState == State.JoiningMultiplayerGame) {
             GameManager.inst.StopFirebase();
             nextState = State.StartingMultiplayerGame;
+        } else if (currentState == State.ChoosingPieceToPromoteTo) {
+            DecrementPromotionIndex();
+            return;
         } else {
             Debug.LogError($"Invalid state: {currentState}");
             return;
@@ -104,6 +119,9 @@ public class BoardInterfaceManager : MonoBehaviour {
         } else if (currentState == State.StartingMultiplayerGame) {
             GameManager.inst.CreateMultiplayerGame();
             nextState = State.CreatingMultiplayerGame;
+        } else if (currentState == State.ChoosingPieceToPromoteTo) {
+            IncrementPromotionIndex();
+            return;
         } else {
             Debug.LogError($"Invalid state: {currentState}");
             return;
@@ -111,7 +129,6 @@ public class BoardInterfaceManager : MonoBehaviour {
 
         ChangeState(nextState);
     }
-
 
     public void RightButtonPressed() {
         State nextState;
@@ -127,6 +144,9 @@ public class BoardInterfaceManager : MonoBehaviour {
         } else if (currentState == State.StartingMultiplayerGame) {
             GameManager.inst.JoinMultiplayerGame();
             nextState = State.JoiningMultiplayerGame;
+        } else if (currentState == State.ChoosingPieceToPromoteTo) {
+            PromotePiece();
+            nextState = stateBeforePromotion;
         } else {
             Debug.LogError($"Invalid state: {currentState}");
             return;
@@ -136,6 +156,12 @@ public class BoardInterfaceManager : MonoBehaviour {
     }
     public void SetText(string text) {
         StartCoroutine(TypeWriterText(text));
+    }
+
+    public void AskForPieceToPromoteTo() {
+        promotionOptionsIndex = 0;
+        stateBeforePromotion = currentState;
+        ChangeState(State.ChoosingPieceToPromoteTo);
     }
 
     #endregion
@@ -163,11 +189,37 @@ public class BoardInterfaceManager : MonoBehaviour {
         LeftButton.sprite = leftButton;
         RightButton.sprite = rightButton;
     }
+    private void DecrementPromotionIndex() {
+        if (promotionOptionsIndex == 0) promotionOptionsIndex = 3;
+        else promotionOptionsIndex--;
+
+        SetScreenText();
+    }
+    private void IncrementPromotionIndex() {
+        if (promotionOptionsIndex == 3) promotionOptionsIndex = 0;
+        else promotionOptionsIndex++;
+
+        SetScreenText();
+    }
+    private void PromotePiece() {
+        var name = PromotionOptions[promotionOptionsIndex];
+        var text = $"Promoting pawn to {name}..";
+        var board = GetComponent<SceneChessBoard>();
+        board.PromotePawnTo(name);
+    }
+
 
     private void SetScreenText() {
-        if (!screenText.ContainsKey(currentState)) return;
+        string text;
+        if (currentState == State.ChoosingPieceToPromoteTo) {
+            var name = PromotionOptions[promotionOptionsIndex];
+            text = $"Promote this Pawn to a {name}?";
+        } else {
+            if (!screenText.ContainsKey(currentState)) return;
 
-        var text = screenText[currentState];
+            text = screenText[currentState];
+        }
+
         SetText(text);
     }
     IEnumerator TypeWriterText(string text) {
@@ -200,5 +252,6 @@ public class BoardInterfaceManager : MonoBehaviour {
         JoiningMultiplayerGame,
         PlayingAIGame,
         PlayingMultiplayerGame,
+        ChoosingPieceToPromoteTo,
     }
 }
