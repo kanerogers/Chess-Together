@@ -18,7 +18,7 @@ public class GameManager : MonoBehaviour {
     #region Public variables
     public SceneChessBoard SceneBoard;
     public ChessBoard LogicBoard;
-    public static GameManager inst;
+    public OpponentType opponentType;
     #endregion
 
     #region Internal State
@@ -29,7 +29,6 @@ public class GameManager : MonoBehaviour {
     AIManager.MoveType AIMoveType;
     int turn;
     string playerId;
-    OpponentType opponentType;
     static string RIFT_APP_ID = "4000641133331067";
     static string QUEST_APP_ID = "3416125671847353";
     string APP_ID;
@@ -45,7 +44,6 @@ public class GameManager : MonoBehaviour {
 
     #region Unity Lifecycle
     void Start() {
-        inst = this;
         SetAppID();
         audioSource = GetComponent<AudioSource>();
         EventManager.MoveComplete += () => { TurnComplete(); };
@@ -70,8 +68,6 @@ public class GameManager : MonoBehaviour {
         CanMove = Player;
         StartGame();
     }
-
-
 
     public void StopFirebase() {
         code = 0;

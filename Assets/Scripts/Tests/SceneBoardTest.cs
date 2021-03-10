@@ -14,10 +14,20 @@ namespace Tests {
                 poolCreated = true;
             }
 
-            GameObject gameGameObject = MonoBehaviour.Instantiate(Resources.Load<GameObject>("Prefabs/Chess Board"));
-            BoardInterfaceManager bi = gameGameObject.GetComponent<BoardInterfaceManager>();
-            var board = gameGameObject.GetComponent<SceneChessBoard>();
-            board.InitializeBoard(new ChessBoard());
+            // Create Game Manager
+            GameManager gameManager = MonoBehaviour.Instantiate(Resources.Load<GameObject>("Prefabs/Game Manager")).GetComponent<GameManager>();
+            gameManager.opponentType = GameManager.OpponentType.AI;
+
+            // Wire up all the hideous dependencies
+            GameObject chessBoardGameObject = MonoBehaviour.Instantiate(Resources.Load<GameObject>("Prefabs/Chess Board"));
+            BoardInterfaceManager bi = chessBoardGameObject.GetComponent<BoardInterfaceManager>();
+            bi.GameManager = gameManager;
+            gameManager.boardInterfaceManager = bi;
+            var board = chessBoardGameObject.GetComponent<SceneChessBoard>();
+            gameManager.SceneBoard = board;
+            var logicBoard = new ChessBoard();
+            board.InitializeBoard(logicBoard);
+            gameManager.LogicBoard = logicBoard;
             return board;
         }
 
@@ -186,12 +196,12 @@ namespace Tests {
         [UnityTest]
         public IEnumerator TestMovement() {
             var board = GetBoard();
-            var piece = board.Pieces[1, 0].GetComponent<SceneChessPiece>();
-            Assert.IsTrue(board.Move(piece, 2, 0));
+            var piece = board.Pieces[6, 0].GetComponent<SceneChessPiece>();
+            Assert.IsTrue(board.Move(piece, 5, 0));
 
-            piece = board.Pieces[2, 0].GetComponent<SceneChessPiece>();
+            piece = board.Pieces[5, 0].GetComponent<SceneChessPiece>();
             yield return new WaitForSeconds(board.MovementDuration + 0.1f);
-            var expectedPosition = board.CoordinatesForPosition(2, 0);
+            var expectedPosition = board.CoordinatesForPosition(5, 0);
             Assert.AreEqual(piece.transform.localPosition, expectedPosition);
         }
 
