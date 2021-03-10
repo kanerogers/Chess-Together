@@ -3,7 +3,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 public class PGNParser {
     StreamReader streamReader;
-    ChessBoard board; // overkill? but seriously how else can I keep track of moves?
+    ChessBoard board;
     public PGNParser(string filename) {
         streamReader = new StreamReader(filename);
         board = new ChessBoard();
@@ -112,7 +112,7 @@ public class PGNParser {
             blackMoveString = split[1];
 
             var whiteMove = parseMoveString(whiteMoveString, ChessPiece.EColour.White);
-            Logger.Log("PGN", $"{whiteMoveString} is {whiteMove}");
+            // Logger.Log("PGN", $"{whiteMoveString} is {whiteMove}");
             if (!board.Move(whiteMove)) throw new System.Exception($"Attempted to make invalid move: {whiteMove}");
             moves.Add(whiteMove);
 
@@ -120,14 +120,19 @@ public class PGNParser {
             if (blackMoveString == "") return;
 
             var blackMove = parseMoveString(blackMoveString, ChessPiece.EColour.Black);
-            Logger.Log("PGN", $"{blackMoveString} is {blackMove}");
+            // Logger.Log("PGN", $"{blackMoveString} is {blackMove}");
             if (!board.Move(blackMove)) throw new System.Exception($"Attempted to make invalid move: {blackMove}");
             moves.Add(blackMove);
         }
     }
 
     public Move parseMoveString(string moveString, ChessPiece.EColour colour) {
-        Logger.Log("PGN", $"Parsing {moveString} for {colour}");
+        // Logger.Log("PGN", $"Parsing {moveString} for {colour}");
+
+        // Remove noise
+        moveString = moveString.Replace(CHECK.ToString(), "");
+        moveString = moveString.Replace(CAPTURE.ToString(), "");
+
         // If this is a Castle, then handle that
         if (moveString == QUEENSIDE_CASTLE) return parseQueensideCastle(moveString, colour);
         if (moveString == KINGSIDE_CASTLE) return parseKingsideCastle(moveString, colour);
@@ -177,10 +182,14 @@ public class PGNParser {
         var (pieceName, _) = parseName($"{p} "); // needs to be done to trick parseName
 
         var (fromRow, fromColumn, toRow, toColumn) = parseCoordinates(coordinates);
-        return board.ValidMoves[colour].Find(m => {
+        var promotionMove = board.ValidMoves[colour].Find(m => {
             if (fromColumn == -1) return m.PieceToPromoteTo == pieceName && m.ToColumn == toColumn;
             else return m.PieceToPromoteTo == pieceName && m.ToColumn == toColumn && m.FromColumn == fromColumn;
         });
+
+        if (promotionMove == null) throw new System.Exception($"Unable to find promotion move for {moveString}");
+
+        return promotionMove;
     }
 
     private Move parseKingsideCastle(string moveString, ChessPiece.EColour colour) {
@@ -196,9 +205,6 @@ public class PGNParser {
 
     private (int, int, int, int) parseCoordinates(string coordinateString) {
         int fromRow = -1, fromColumn = -1, toRow, toColumn;
-        // Get rid of noise
-        coordinateString = coordinateString.Replace(CHECK.ToString(), "");
-        coordinateString = coordinateString.Replace(CAPTURE.ToString(), "");
 
         // Move with no origin rank OR file
         if (coordinateString.Length == 2) {
@@ -238,7 +244,7 @@ public class PGNParser {
             return (fromRow, fromColumn, toRow, toColumn);
         }
 
-        throw new System.NotImplementedException();
+        throw new System.Exception($"Invalid coordinates: {coordinateString}");
     }
 
     private (ChessPiece.EName, string) parseName(string moveString) {
