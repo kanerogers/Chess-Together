@@ -31,10 +31,6 @@ public class SceneChessBoard : MonoBehaviour {
     (SceneChessPiece, int, int) promotionData = (null, 0, 0);
     GameObject[] Squares = new GameObject[64];
 
-    void Start() {
-        boardInterfaceManager = GetComponent<BoardInterfaceManager>();
-    }
-
     public void InitializeBoard(ChessBoard board) {
         if (initialized) {
             ReinitializeBoard(board);

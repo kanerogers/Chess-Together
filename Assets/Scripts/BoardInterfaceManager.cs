@@ -19,6 +19,7 @@ public class BoardInterfaceManager : MonoBehaviour {
     public SpriteRenderer RightButton;
     public TextMeshProUGUI ChessBoardScreen;
     public float typingSpeed;
+    public GameManager GameManager;
     #endregion
 
     #region Public
@@ -83,15 +84,15 @@ public class BoardInterfaceManager : MonoBehaviour {
 
         if (currentState == State.PlayingAIGame) {
             nextState = State.ChoosingGameType;
-            GameManager.inst.Reset();
+            GameManager.Reset();
         } else if (currentState == State.PlayingMultiplayerGame) {
-            GameManager.inst.StopFirebase();
-            GameManager.inst.Reset();
+            GameManager.StopFirebase();
+            GameManager.Reset();
             nextState = State.StartingMultiplayerGame;
         } else if (currentState == State.StartingMultiplayerGame) {
             nextState = State.ChoosingGameType;
         } else if (currentState == State.CreatingMultiplayerGame || currentState == State.JoiningMultiplayerGame) {
-            GameManager.inst.StopFirebase();
+            GameManager.StopFirebase();
             nextState = State.StartingMultiplayerGame;
         } else if (currentState == State.ChoosingPieceToPromoteTo) {
             DecrementPromotionIndex();
@@ -114,10 +115,10 @@ public class BoardInterfaceManager : MonoBehaviour {
         leftButtonLastPressedTime = Time.fixedTime;
 
         if (currentState == State.ChoosingGameType) {
-            GameManager.inst.StartAIGame();
+            GameManager.StartAIGame();
             nextState = State.PlayingAIGame;
         } else if (currentState == State.StartingMultiplayerGame) {
-            GameManager.inst.CreateMultiplayerGame();
+            GameManager.CreateMultiplayerGame();
             nextState = State.CreatingMultiplayerGame;
         } else if (currentState == State.ChoosingPieceToPromoteTo) {
             IncrementPromotionIndex();
@@ -142,7 +143,7 @@ public class BoardInterfaceManager : MonoBehaviour {
         if (currentState == State.ChoosingGameType) {
             nextState = State.StartingMultiplayerGame;
         } else if (currentState == State.StartingMultiplayerGame) {
-            GameManager.inst.JoinMultiplayerGame();
+            GameManager.JoinMultiplayerGame();
             nextState = State.JoiningMultiplayerGame;
         } else if (currentState == State.ChoosingPieceToPromoteTo) {
             PromotePiece();
