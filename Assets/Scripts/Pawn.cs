@@ -44,6 +44,9 @@ public class Pawn : ChessPiece {
 
             // Check if there is a piece on this diagonal
             if (pieceOnSquare != null) {
+                if (pieceOnSquare.Colour == Colour) {
+                    throw new Exception($"{this} attempted to capture {pieceOnSquare}!");
+                }
                 // Logger.Log("Pawn", $"Pawn can move diagonally to {toRow},{toColumn} as there is a piece on that square: {pieceOnSquare}");
                 return true;
             } else {

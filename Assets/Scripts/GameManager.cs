@@ -19,15 +19,15 @@ public class GameManager : MonoBehaviour {
     public SceneChessBoard SceneBoard;
     public ChessBoard LogicBoard;
     public OpponentType opponentType;
+    public ChessPiece.EColour CanMove;
+    public int Turn;
     #endregion
 
     #region Internal State
     private SceneChessPiece SelectedPiece;
-    private ChessPiece.EColour CanMove;
     ChessPiece.EColour Player;
     ChessPiece.EColour Opponent;
     AIManager.MoveType AIMoveType;
-    int turn;
     string playerId;
     static string RIFT_APP_ID = "4000641133331067";
     static string QUEST_APP_ID = "3416125671847353";
@@ -44,6 +44,7 @@ public class GameManager : MonoBehaviour {
 
     #region Unity Lifecycle
     void Start() {
+        Debug.Log("Start!");
         SetAppID();
         audioSource = GetComponent<AudioSource>();
         EventManager.MoveComplete += () => { TurnComplete(); };
@@ -118,7 +119,7 @@ public class GameManager : MonoBehaviour {
     }
     private void StartGame() {
         Avatar.SetActive(true);
-        turn = 0;
+        Turn = 0;
 
         if (Player == ChessPiece.EColour.White) {
             Debug.Log("player is white, setting pivot");
@@ -218,8 +219,8 @@ public class GameManager : MonoBehaviour {
                     var move = new Move(entry.Value);
                     Debug.Log($"Received move: {move}");
 
-                    if (move.Sequence < turn) {
-                        Debug.Log($"Turn is at sequence {move.Sequence} but we are on turn {turn} - ignoring");
+                    if (move.Sequence < Turn) {
+                        Debug.Log($"Turn is at sequence {move.Sequence} but we are on turn {Turn} - ignoring");
                         continue;
                     }
 
@@ -287,7 +288,7 @@ public class GameManager : MonoBehaviour {
             PushMoveToFirebase();
         }
 
-        turn++;
+        Turn++;
 
         ToggleCanMove();
         SelectedPiece?.ToggleSelected(false);
@@ -310,7 +311,7 @@ public class GameManager : MonoBehaviour {
     private void PushMoveToFirebase() {
         var move = LogicBoard.GetLastMove();
         move.Player = playerId;
-        move.Sequence = turn;
+        move.Sequence = Turn;
         firebase.Child($"games/{code}/moves").Push(move.ToDictionary());
     }
 

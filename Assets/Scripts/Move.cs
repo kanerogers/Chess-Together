@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 public class Move : IEquatable<Move> {
     public int Sequence;
@@ -14,6 +15,7 @@ public class Move : IEquatable<Move> {
     public bool IsEnPassantCapture;
     public ChessPiece.EName PieceToPromoteTo;
     public (Pawn, Pawn) PreviousEnPassantState;
+    static StringBuilder sb = new StringBuilder();
 
     public Move(int fromRow, int fromColumn, int toRow, int toColumn) {
         FromRow = fromRow;
@@ -48,14 +50,24 @@ public class Move : IEquatable<Move> {
     }
 
     public override string ToString() {
-        if (PieceToPromoteTo == 0) {
-            return $"Sequence {Sequence}: {FromRow},{FromColumn} to {ToRow},{ToColumn}. Score: {Score}";
-        } else {
-            return $"Sequence {Sequence}: {FromRow},{FromColumn} to {ToRow},{ToColumn}. Score: {Score}, Promote to: {PieceToPromoteTo}";
+        sb.Clear();
+        sb.Append($"{FromRow},{FromColumn} to {ToRow},{ToColumn} ");
+        if (Score != 0) {
+            sb.Append($"Score: {Score}");
         }
+        if (PieceToPromoteTo != 0) {
+            sb.Append($"Promote to: {PieceToPromoteTo}");
+        }
+        if (IsEnPassantCapture) {
+            sb.Append($"IsEnPassantCapture=True");
+        }
+        if (IsCastling) {
+            sb.Append($"IsCastling=True");
+        }
+        return sb.ToString();
     }
 
-    internal (int, int, int, int) ToCoordinates() {
+    public (int, int, int, int) ToCoordinates() {
         return (FromRow, FromColumn, ToRow, ToColumn);
     }
 
