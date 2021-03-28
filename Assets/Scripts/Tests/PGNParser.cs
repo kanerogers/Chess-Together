@@ -17,8 +17,8 @@ public class PGNParser {
     static char CAPTURE = 'x';
     static char CHECK = '+';
     static string PROMOTION = "=";
-    static string QUEENSIDE_CASTLE = "O-O-O";
-    static string KINGSIDE_CASTLE = "O-O";
+    public static string QUEENSIDE_CASTLE = "O-O-O";
+    public static string KINGSIDE_CASTLE = "O-O";
     static Dictionary<char, int> RANK_TO_ROW = new Dictionary<char, int>() {
         {'1', 7},
         {'2', 6},
