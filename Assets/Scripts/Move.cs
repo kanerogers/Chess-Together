@@ -105,7 +105,9 @@ public class Move : IEquatable<Move> {
         var file = COLUMN_TO_FILE[ToColumn];
         var rank = ROW_TO_RANK[ToRow];
         var coordinates = $"{file}{rank}";
-        var pgn = $"{turn}.{coordinates}";
+        var piece = board.Pieces[FromRow, FromColumn];
+        var pieceName = PIECE_NAMES[piece.Name];
+        var pgn = $"{turn}.{pieceName}{coordinates}";
         return pgn;
     }
 
@@ -128,5 +130,16 @@ public class Move : IEquatable<Move> {
         "f",
         "g",
         "h"
+    };
+
+
+    // knight = "N", bishop = "B", rook = "R", queen = "Q", and king = "K".
+    static Dictionary<ChessPiece.EName, string> PIECE_NAMES = new Dictionary<ChessPiece.EName, string> {
+        { ChessPiece.EName.Knight, "N" },
+        { ChessPiece.EName.Pawn, ""},
+        { ChessPiece.EName.King, "K" },
+        { ChessPiece.EName.Bishop, "B" },
+        { ChessPiece.EName.Rook, "R" },
+        { ChessPiece.EName.Queen, "Q" },
     };
 }
