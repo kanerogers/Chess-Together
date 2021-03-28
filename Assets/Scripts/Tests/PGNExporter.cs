@@ -4,43 +4,64 @@ public static class PGNExporter {
     // Exports a *single* game to a PGN formatted string
     // Not techniocally a PGN exporter since it doesn't add any of the game tags or whatever.
     public static string ToPGN(ChessBoard board) {
-        var turn = 1;
+        var turn = 0;
         var sb = new StringBuilder();
         var isWhite = true;
-        var moveStack = new Stack<Move>();
+        var moveStack = new Stack<(Move, bool)>();
         while (board.UndoStack.Count != 0) {
-            var move = board.GetLastMove();
-            moveStack.Push(move);
+            var (move, capturedPiece) = board.UndoStack.Peek();
+            var isCapture = capturedPiece != null;
+            moveStack.Push((move, isCapture));
+            Logger.Log("PGN", "Undoing", move);
             board.Undo();
         }
 
-        foreach (var move in moveStack) {
+        foreach (var (move, isCapture) in moveStack) {
             if (isWhite) {
+                turn++;
                 sb.Append(turn);
                 sb.Append(".");
             }
 
-            var san = MoveToSAN(board, move);
+            var san = MoveToSAN(board, move, isCapture);
             sb.Append(san);
             if (!board.Move(move)) throw new System.Exception($"ATTEMPTED INVALID MOVE: {move}");
 
             sb.Append(" ");
             isWhite = !isWhite;
-
         }
 
         return sb.ToString().TrimEnd(new char[] { ' ' });
     }
-    public static string MoveToSAN(ChessBoard board, Move move) {
+    public static string MoveToSAN(ChessBoard board, Move move, bool isCapture) {
+        if (move.IsCastling) {
+            if (IsQueensideCastle(move)) return PGNParser.QUEENSIDE_CASTLE;
+            if (IsKingSideCastle(move)) return PGNParser.KINGSIDE_CASTLE;
+            else throw new System.Exception($"Invalid castle: {move}");
+        }
+        Logger.Log("PGN", "Parsing", move);
         var (FromRow, FromColumn, ToRow, ToColumn) = move.ToCoordinates();
-        var file = COLUMN_TO_FILE[ToColumn];
-        var rank = ROW_TO_RANK[ToRow];
-        var coordinates = $"{file}{rank}";
+
         var piece = board.Pieces[FromRow, FromColumn];
+        var fromFile = "";
+        var fromRank = "";
+        if (isCapture && piece.Name == ChessPiece.EName.Pawn) {
+            fromFile = COLUMN_TO_FILE[FromColumn];
+        }
+
+        var toFile = COLUMN_TO_FILE[ToColumn];
+        var toRank = ROW_TO_RANK[ToRow];
+        var fromCoordinates = $"{fromFile}{fromRank}";
+        var toCoordinates = $"{toFile}{toRank}";
         var pieceName = PIECE_NAMES[piece.Name];
-        var san = $"{pieceName}{coordinates}";
+        var capture = isCapture ? "x" : "";
+        var san = $"{pieceName}{fromCoordinates}{capture}{toCoordinates}";
         return san;
     }
+
+    private static bool IsKingSideCastle(Move move) => move.ToColumn == 6;
+
+    private static bool IsQueensideCastle(Move move) => move.ToColumn == 2;
 
     static string[] ROW_TO_RANK = new string[8] {
         "8",

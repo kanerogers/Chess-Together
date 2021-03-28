@@ -20,7 +20,7 @@ namespace Tests {
         [Test]
         public void FullPGNTest() {
             var exportPath = "Assets\\Scripts\\Tests\\export.pgn";
-            var importPath = "Assets\\Scripts\\Tests\\test.pgn";
+            var importPath = "Assets\\Scripts\\Tests\\one.pgn";
             var parser = new PGNParser(importPath);
             parser.Parse(1);
             var board = parser.Board;
