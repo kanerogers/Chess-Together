@@ -100,46 +100,4 @@ public class Move : IEquatable<Move> {
 
     public bool IsPromotion() => PieceToPromoteTo != ChessPiece.EName.None;
 
-    public string ToPGN(ChessBoard board) {
-        var turn = (board.Turn + 1).ToString(); // Need to increment as this move has NOT been made yet.
-        var file = COLUMN_TO_FILE[ToColumn];
-        var rank = ROW_TO_RANK[ToRow];
-        var coordinates = $"{file}{rank}";
-        var piece = board.Pieces[FromRow, FromColumn];
-        var pieceName = PIECE_NAMES[piece.Name];
-        var pgn = $"{turn}.{pieceName}{coordinates}";
-        return pgn;
-    }
-
-    static string[] ROW_TO_RANK = new string[8] {
-        "8",
-        "7",
-        "6",
-        "5",
-        "4",
-        "3",
-        "2",
-        "1"
-    };
-    static string[] COLUMN_TO_FILE = new string[8] {
-        "a",
-        "b",
-        "c",
-        "d",
-        "e",
-        "f",
-        "g",
-        "h"
-    };
-
-
-    // knight = "N", bishop = "B", rook = "R", queen = "Q", and king = "K".
-    static Dictionary<ChessPiece.EName, string> PIECE_NAMES = new Dictionary<ChessPiece.EName, string> {
-        { ChessPiece.EName.Knight, "N" },
-        { ChessPiece.EName.Pawn, ""},
-        { ChessPiece.EName.King, "K" },
-        { ChessPiece.EName.Bishop, "B" },
-        { ChessPiece.EName.Rook, "R" },
-        { ChessPiece.EName.Queen, "Q" },
-    };
 }

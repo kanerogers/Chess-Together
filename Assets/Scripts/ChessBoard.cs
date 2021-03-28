@@ -234,9 +234,9 @@ public class ChessBoard {
                             // FIDE 3.7e - ..
                             // exchanged as part of the same move on the same square for a new queen, rook,
                             // bishop or knight of the same colour.
-                            if (fromColumn != toColumn) {
-                                Logger.Log("IS_PROMOTION", "Adding suspect promotion that would capture", pieceAtDestination);
-                            }
+                            // if (fromColumn != toColumn) {
+                            //     Logger.Log("IS_PROMOTION", "Adding suspect promotion that would capture", pieceAtDestination);
+                            // }
                             move = new Move(fromRow, fromColumn, toRow, toColumn, ChessPiece.EName.Bishop);
                             ValidMoves[colour].Add(move);
                             move = new Move(fromRow, fromColumn, toRow, toColumn, ChessPiece.EName.Rook);
