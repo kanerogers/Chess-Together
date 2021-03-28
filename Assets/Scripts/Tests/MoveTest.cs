@@ -9,6 +9,13 @@ namespace Tests {
             var pgn = move.ToPGN(board);
             var expected = "1.a3";
             Assert.AreEqual(expected, pgn);
+            Assert.IsTrue(board.Move(move));
+
+            move = new Move(0, 1, 2, 2);
+            expected = "2.Nc6";
+            pgn = move.ToPGN(board);
+            Assert.AreEqual(expected, pgn);
+            Assert.IsTrue(board.Move(move));
         }
 
     }
