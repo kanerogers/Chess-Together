@@ -99,4 +99,34 @@ public class Move : IEquatable<Move> {
     }
 
     public bool IsPromotion() => PieceToPromoteTo != ChessPiece.EName.None;
+
+    public string ToPGN(ChessBoard board) {
+        var turn = (board.Turn + 1).ToString(); // Need to increment as this move has NOT been made yet.
+        var file = COLUMN_TO_FILE[ToColumn];
+        var rank = ROW_TO_RANK[ToRow];
+        var coordinates = $"{file}{rank}";
+        var pgn = $"{turn}.{coordinates}";
+        return pgn;
+    }
+
+    static string[] ROW_TO_RANK = new string[8] {
+        "8",
+        "7",
+        "6",
+        "5",
+        "4",
+        "3",
+        "2",
+        "1"
+    };
+    static string[] COLUMN_TO_FILE = new string[8] {
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h"
+    };
 }
