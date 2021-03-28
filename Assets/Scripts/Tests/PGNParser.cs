@@ -3,10 +3,10 @@ using System.IO;
 using System.Text.RegularExpressions;
 public class PGNParser {
     StreamReader streamReader;
-    ChessBoard board;
+    internal ChessBoard Board;
     public PGNParser(string filename) {
         streamReader = new StreamReader(filename);
-        board = new ChessBoard();
+        Board = new ChessBoard();
     }
 
     static char BISHOP = 'B';
@@ -60,7 +60,7 @@ public class PGNParser {
                     inHeader = true;
                     gamesRead++;
                     if (numGames != 0 && gamesRead >= numGames) return games;
-                    board = new ChessBoard();
+                    Board = new ChessBoard();
                     games.Add(moves);
                     moves = new List<Move>();
                 }
@@ -71,9 +71,9 @@ public class PGNParser {
                     parseLine(line, moves);
                 } catch (System.Exception e) {
                     Logger.Log("ERROR", $"Error parsing on line {lineNumber}: {line}.");
-                    Logger.Log("ERROR", $"Board state is {board}");
+                    Logger.Log("ERROR", $"Board state is {Board}");
                     Logger.Log("ERROR", $"Valid moves are:");
-                    foreach (var move in board.ValidMoves[ChessPiece.EColour.Black]) {
+                    foreach (var move in Board.ValidMoves[ChessPiece.EColour.Black]) {
                         Logger.Log("ERROR", move.ToString());
                     }
                     Logger.Log("ERROR", e.ToString());
@@ -116,7 +116,7 @@ public class PGNParser {
 
             var whiteMove = parseMoveString(whiteMoveString, ChessPiece.EColour.White);
             // Logger.Log("PGN", $"{whiteMoveString} is {whiteMove}");
-            if (!board.Move(whiteMove)) throw new System.Exception($"Attempted to make invalid move: {whiteMove}");
+            if (!Board.Move(whiteMove)) throw new System.Exception($"Attempted to make invalid move: {whiteMove}");
             moves.Add(whiteMove);
 
             // If white won, then black's final move will be empty.
@@ -124,7 +124,7 @@ public class PGNParser {
 
             var blackMove = parseMoveString(blackMoveString, ChessPiece.EColour.Black);
             // Logger.Log("PGN", $"{blackMoveString} is {blackMove}");
-            if (!board.Move(blackMove)) throw new System.Exception($"Attempted to make invalid move: {blackMove}");
+            if (!Board.Move(blackMove)) throw new System.Exception($"Attempted to make invalid move: {blackMove}");
             moves.Add(blackMove);
         }
     }
@@ -152,7 +152,7 @@ public class PGNParser {
         var (fromRow, fromColumn, toRow, toColumn) = parseCoordinates(coordinateString);
 
         // Then look through ValidMoves[Colour] for moves with matching toRow, toColumn
-        var moveCandidates = board.ValidMoves[colour].FindAll(m => m.ToRow == toRow && m.ToColumn == toColumn);
+        var moveCandidates = Board.ValidMoves[colour].FindAll(m => m.ToRow == toRow && m.ToColumn == toColumn);
 
         // If moves.Count == 1, return that move
         if (moveCandidates.Count == 1) return moveCandidates[0];
@@ -161,7 +161,7 @@ public class PGNParser {
         foreach (var candidate in moveCandidates) {
             // If we got a startRow or startColumn provided in the moveString, use that.
             var (row, column) = (candidate.FromRow, candidate.FromColumn);
-            var piece = board.Pieces[row, column];
+            var piece = Board.Pieces[row, column];
             var name = piece.Name;
 
             // Try most specific first.
@@ -185,7 +185,7 @@ public class PGNParser {
         var (pieceName, _) = parseName($"{p} "); // needs to be done to trick parseName
 
         var (fromRow, fromColumn, toRow, toColumn) = parseCoordinates(coordinates);
-        var promotionMove = board.ValidMoves[colour].Find(m => {
+        var promotionMove = Board.ValidMoves[colour].Find(m => {
             if (fromColumn == -1) return m.PieceToPromoteTo == pieceName && m.ToColumn == toColumn;
             else return m.PieceToPromoteTo == pieceName && m.ToColumn == toColumn && m.FromColumn == fromColumn;
         });
@@ -197,13 +197,13 @@ public class PGNParser {
 
     private Move parseKingsideCastle(string moveString, ChessPiece.EColour colour) {
         var row = colour == ChessPiece.EColour.Black ? 0 : 7;
-        return board.ValidMoves[colour].Find(m => m.FromRow == row && m.FromColumn == 4 && m.ToColumn == 6 && m.ToRow == row);
+        return Board.ValidMoves[colour].Find(m => m.FromRow == row && m.FromColumn == 4 && m.ToColumn == 6 && m.ToRow == row);
 
     }
 
     private Move parseQueensideCastle(string moveString, ChessPiece.EColour colour) {
         var row = colour == ChessPiece.EColour.Black ? 0 : 7;
-        return board.ValidMoves[colour].Find(m => m.FromRow == row && m.FromColumn == 4 && m.ToColumn == 2 && m.ToRow == row);
+        return Board.ValidMoves[colour].Find(m => m.FromRow == row && m.FromColumn == 4 && m.ToColumn == 2 && m.ToRow == row);
     }
 
     private (int, int, int, int) parseCoordinates(string coordinateString) {
