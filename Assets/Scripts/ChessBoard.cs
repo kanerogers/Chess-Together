@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 
 public class ChessBoard {
     public King BlackKing;
@@ -11,6 +12,7 @@ public class ChessBoard {
     public Stack<(Move, ChessPiece)> UndoStack = new Stack<(Move, ChessPiece)>();
     public Dictionary<ChessPiece.EColour, BoardStatus> State = new Dictionary<ChessPiece.EColour, BoardStatus>();
     public Pawn PawnThatCanBeCapturedWithEnpassant = null;
+    static StringBuilder sb = new StringBuilder();
 
     #region Public
     public ChessBoard() {
@@ -91,8 +93,11 @@ public class ChessBoard {
 
         // If this was an enpassant capture, the piece is at a different location.
         if (move.IsEnPassantCapture) {
-            var enPessantRow = ((Pawn)piece).GetEnPassantRow(toRow);
-            removedPiece = Pieces[enPessantRow, toColumn];
+            var enPassantRow = ((Pawn)piece).GetEnPassantRow(toRow);
+            if (enPassantRow > 8 || enPassantRow < 0) {
+                throw new Exception($"Invalid enPassantRow {enPassantRow}. Piece is {piece} ???");
+            }
+            removedPiece = Pieces[enPassantRow, toColumn];
             // Logger.Log("EP", $"Removed piece is {removedPiece}");
         }
 
@@ -108,7 +113,6 @@ public class ChessBoard {
 
     public void Undo(bool isKingInCheckTest = false) {
         var (lastMove, removedPiece) = UndoStack.Pop();
-        // Logger.Log("UNDO", $"Undoing {lastMove}");
 
         UndoPiecesState(lastMove, removedPiece);
         UndoTurn(lastMove);
@@ -197,17 +201,31 @@ public class ChessBoard {
 
                 for (int toRow = 0; toRow < 8; toRow++) {
                     for (int toColumn = 0; toColumn < 8; toColumn++) {
+                        // var before = ToString();
                         var move = new Move(fromRow, fromColumn, toRow, toColumn);
+                        var pieceAtDestination = Pieces[toRow, toColumn];
+                        if (move.IsEnPassantCapture) {
+                            var pawn = (Pawn)piece;
+                            var enPassantRow = pawn.GetEnPassantRow(toRow);
+                            pieceAtDestination = Pieces[enPassantRow, toColumn];
+                            if (pieceAtDestination == null) {
+                                throw new Exception($"Attempted to capture piece at {enPassantRow},{toColumn}.");
+                            }
+                        }
 
                         // If this move is invalid, continue.
                         if (!Move(move, checkIfKingIsInCheck: true, checkStateAfterMove: false)) continue;
+                        if (fromRow == toRow && fromColumn == toColumn) {
+                            throw new Exception($"Move {move} is invalid! It's the same square!");
+                        }
 
                         // WARNING: Move has been made, must call Undo before continue!
 
                         // Check to see if this move is a pawn promotion.
                         bool isPromotion = false;
                         if (piece.Name == ChessPiece.EName.Pawn) {
-                            isPromotion = ((Pawn)piece).IsPromotion(toRow, toColumn);
+                            var pawn = (Pawn)piece;
+                            isPromotion = pawn.IsPromotion(toRow, toColumn);
                         }
 
                         // If it is a promotion, we have to add all the promotion possibilities.
@@ -216,6 +234,9 @@ public class ChessBoard {
                             // FIDE 3.7e - ..
                             // exchanged as part of the same move on the same square for a new queen, rook,
                             // bishop or knight of the same colour.
+                            if (fromColumn != toColumn) {
+                                Logger.Log("IS_PROMOTION", "Adding suspect promotion that would capture", pieceAtDestination);
+                            }
                             move = new Move(fromRow, fromColumn, toRow, toColumn, ChessPiece.EName.Bishop);
                             ValidMoves[colour].Add(move);
                             move = new Move(fromRow, fromColumn, toRow, toColumn, ChessPiece.EName.Rook);
@@ -231,6 +252,10 @@ public class ChessBoard {
                         // If the King is not in check, there is no need to evaluate if this is checkmate.
                         if (State[colour] == BoardStatus.NotInCheck) {
                             Undo();
+                            // var after = ToString();
+                            // if (before != after) {
+                            //     throw new Exception($"{before} is not equal to  {after}!");
+                            // }
                             continue;
                         }
 
@@ -242,6 +267,13 @@ public class ChessBoard {
                             State[colour] = BoardStatus.Check;
                         }
                         Undo();
+
+                        // {
+                        //     var after = ToString();
+                        //     if (before != after) {
+                        //         throw new Exception($"{before} is not equal to  {after}!");
+                        //     }
+                        // }
                     }
                 }
             }
@@ -329,7 +361,6 @@ public class ChessBoard {
 
     private void UndoTurn(Move lastMove) {
         Turn--;
-        // Logger.Log($"Turn undo - {Turn}");
     }
 
     private void UpdateEnPassantState(Move move) {
@@ -415,12 +446,19 @@ public class ChessBoard {
         if (piece == null) throw new Exception($"Error evaluating {move} - piece is null!");
         var king = piece.Colour == ChessPiece.EColour.Black ? BlackKing : WhiteKing;
 
+        // var before = ToString();
+
         if (!Move(move, false, false)) {
             throw new System.Exception($"Attempted to make invalid move: {move}");
         }
 
         var isInCheck = (king.IsInCheck(Pieces));
         Undo();
+        // var after = ToString();
+        // if (before != after) {
+        //     throw new Exception($"{before} is not equal to {after}!");
+        // }
+
         return isInCheck;
     }
 
@@ -548,17 +586,19 @@ public class ChessBoard {
 
     #region Overrides
     public override string ToString() {
-        var s = "";
+        sb.Clear();
         for (var row = 0; row <= 7; row++) {
             for (var column = 0; column <= 7; column++) {
                 var p = Pieces[row, column];
                 if (p == null) continue;
-                s += $"{row},{column}: ";
-                s += p.ToString();
-                s += ", ";
+                sb.Append(row);
+                sb.Append(", ");
+                sb.Append(column);
+                sb.Append(p.ToString());
+                sb.Append(", ");
             }
         }
-        return s;
+        return sb.ToString();
     }
     #endregion
 

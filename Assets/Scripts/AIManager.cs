@@ -21,6 +21,8 @@ public static class AIManager {
             throw new System.Exception($"Wuh woh, no valid moves left. Board state is {board}");
         }
 
+        var previousBoard = board.ToString();
+
         foreach (Move move in validMoves) {
             int depthReached;
             (move.Score, depthReached) = MinMax(board, move, AI, AI.Inverse(), AI, MINMAX_DEPTH);
@@ -41,6 +43,11 @@ public static class AIManager {
 
         var random = new System.Random();
         var chosenMove = bestMoves[random.Next(bestMoves.Count - 1)];
+
+        var boardAfter = board.ToString();
+        if (previousBoard != boardAfter) {
+            throw new System.Exception($"{previousBoard} does not match {boardAfter}!");
+        }
 
         return chosenMove;
     }

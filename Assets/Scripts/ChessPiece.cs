@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 
 public abstract class ChessPiece {
     public EColour Colour;
@@ -6,6 +7,7 @@ public abstract class ChessPiece {
     public int Row;
     public int Column;
     public bool HasMoved;
+    static StringBuilder sb = new StringBuilder();
 
     public virtual bool CheckMove(ChessPiece[,] pieces, Move move) {
         var (_, _, toRow, toColumn) = move.ToCoordinates();
@@ -118,7 +120,15 @@ public abstract class ChessPiece {
 
 
     public override string ToString() {
-        return $"{Colour} {Name} at {Row},{Column}";
+        sb.Clear();
+        sb.Append(Colour);
+        sb.Append(" ");
+        sb.Append(Name);
+        sb.Append(" at ");
+        sb.Append(Row);
+        sb.Append(",");
+        sb.Append(Column);
+        return sb.ToString();
     }
 
     public ChessPiece Clone() {
