@@ -80,14 +80,17 @@ namespace Tests {
 
             var openingMove = new Move(6, 0, 4, 0);
             yield return MovePiece(sceneBoard, openingMove);
+            var logicBoard = gameManager.LogicBoard;
+            var whiteState = logicBoard.State[ChessPiece.EColour.White];
+            var blackState = logicBoard.State[ChessPiece.EColour.Black];
+            var finished = false;
 
-            while (gameManager.boardInterfaceManager.currentState == BoardInterfaceManager.State.PlayingAIGame) {
+
+            while (!finished) {
                 // Wait for the AI to make its turn.
                 while (gameManager.CanMove != ChessPiece.EColour.White) {
                     yield return null;
                 }
-
-                var logicBoard = gameManager.LogicBoard;
 
                 var nextMove = AIManager.GetMove(logicBoard, ChessPiece.EColour.White, AIManager.MoveType.Standard);
                 Debug.Log($"[{gameManager.Turn}] Making {nextMove}..");
@@ -100,6 +103,7 @@ namespace Tests {
                 Assert.AreEqual(ChessPiece.EColour.White, piece.Colour);
                 Assert.AreEqual(toRow, piece.Row);
                 Assert.AreEqual(toColumn, piece.Column);
+                finished = (whiteState == ChessBoard.BoardStatus.Checkmate || blackState == ChessBoard.BoardStatus.Checkmate);
             }
         }
     }
