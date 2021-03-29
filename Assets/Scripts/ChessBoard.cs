@@ -89,7 +89,7 @@ public class ChessBoard {
         var piece = Pieces[fromRow, fromColumn];
 
         // Before we can update the state, we need to stash the move away.
-        var removedPiece = move.IsPromotion() ? piece : Pieces[toRow, toColumn];
+        var removedPiece = Pieces[toRow, toColumn];
 
         // If this was an enpassant capture, the piece is at a different location.
         if (move.IsEnPassantCapture) {
@@ -327,6 +327,9 @@ public class ChessBoard {
 
         var (fromRow, fromColumn, toRow, toColumn) = lastMove.ToCoordinates();
         var movedPiece = Pieces[toRow, toColumn];
+        if (movedPiece == null) {
+            throw new Exception($"Unable to undo move {lastMove} - movedPiece is null!");
+        }
 
         // If this was a castle, undo that too.
         if (lastMove.IsCastling) {
@@ -574,11 +577,19 @@ public class ChessBoard {
 
     }
 
-    private void UndoPromotion(Move lastMove, ChessPiece pawn) {
+    private void UndoPromotion(Move lastMove, ChessPiece removedPiece) {
         var (fromRow, fromColumn, toRow, toColumn) = (lastMove.FromRow, lastMove.FromColumn, lastMove.ToRow, lastMove.ToColumn);
 
-        // Remove the "promotion" piece.
-        Pieces[toRow, toColumn] = null;
+        // Grab the promotion piece
+        var promotionPiece = Pieces[toRow, toColumn];
+
+        // Create a new pawn to replace the one that was promoted.
+        var pawn = new Pawn(promotionPiece.Colour, fromRow, fromColumn);
+
+        // Replace the promotion piece.
+        Pieces[toRow, toColumn] = removedPiece;
+
+        // Put the pawn back in place
         Pieces[fromRow, fromColumn] = pawn;
     }
 
