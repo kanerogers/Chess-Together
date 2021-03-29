@@ -6,19 +6,18 @@ public static class PGNExporter {
     public static string ToPGN(ChessBoard board) {
         var turn = 0;
         var sb = new StringBuilder();
-        var isWhite = true;
+        var canMove = ChessPiece.EColour.White;
         var moveStack = new Stack<(Move, bool)>();
 
         while (board.UndoStack.Count != 0) {
             var (move, capturedPiece) = board.UndoStack.Peek();
             var isCapture = capturedPiece != null;
             moveStack.Push((move, isCapture));
-            Logger.Log("PGN", "Undoing", move);
             board.Undo();
         }
 
         foreach (var (move, isCapture) in moveStack) {
-            if (isWhite) {
+            if (canMove == ChessPiece.EColour.White) {
                 turn++;
                 sb.Append(turn);
                 sb.Append(".");
@@ -28,8 +27,13 @@ public static class PGNExporter {
             sb.Append(san);
             if (!board.Move(move)) throw new System.Exception($"ATTEMPTED INVALID MOVE: {move}");
 
+            if (board.State[canMove.Inverse()] == ChessBoard.BoardStatus.Check) {
+                sb.Append("+");
+            }
+
+
             sb.Append(" ");
-            isWhite = !isWhite;
+            canMove = canMove.Inverse();
         }
 
         return sb.ToString().TrimEnd(new char[] { ' ' });
@@ -40,7 +44,6 @@ public static class PGNExporter {
             if (IsKingSideCastle(move)) return PGNParser.KINGSIDE_CASTLE;
             else throw new System.Exception($"Invalid castle: {move}");
         }
-        Logger.Log("PGN", "Parsing", move);
         var (FromRow, FromColumn, ToRow, ToColumn) = move.ToCoordinates();
 
         var piece = board.Pieces[FromRow, FromColumn];
@@ -51,7 +54,6 @@ public static class PGNExporter {
         foreach (var m in board.ValidMoves[piece.Colour]) {
             if (m.ToRow != ToRow || m.ToColumn != ToColumn) continue;
             if (m == move) continue;
-            Logger.Log("PGNExporter", "Checking potentially ambiguous move", m);
             var n = board.Pieces[m.FromRow, m.FromColumn].Name;
             if (n != piece.Name) continue;
 
@@ -66,11 +68,14 @@ public static class PGNExporter {
 
         var toFile = COLUMN_TO_FILE[ToColumn];
         var toRank = ROW_TO_RANK[ToRow];
+
         var fromCoordinates = $"{fromFile}{fromRank}";
         var toCoordinates = $"{toFile}{toRank}";
+
         var pieceName = PIECE_NAMES[piece.Name];
         var capture = isCapture ? "x" : "";
-        var san = $"{pieceName}{fromCoordinates}{capture}{toCoordinates}";
+        var promotion = move.IsPromotion() ? $"={PIECE_NAMES[move.PieceToPromoteTo]}" : "";
+        var san = $"{pieceName}{fromCoordinates}{capture}{toCoordinates}{promotion}";
         return san;
     }
 
