@@ -49,14 +49,15 @@ public static class PGNExporter {
 
         // Check if the move is ambiguous
         foreach (var m in board.ValidMoves[piece.Colour]) {
+            if (m.ToRow != ToRow || m.ToColumn != ToColumn) continue;
             if (m == move) continue;
-            if (m.ToRow != ToRow && m.ToColumn != ToColumn) continue;
             Logger.Log("PGNExporter", "Checking potentially ambiguous move", m);
             var n = board.Pieces[m.FromRow, m.FromColumn].Name;
             if (n != piece.Name) continue;
 
             // This move is ambiguous - try to fix that.
             if (m.FromColumn != FromColumn) fromFile = COLUMN_TO_FILE[FromColumn];
+            else if (m.FromRow != FromRow) fromRank = ROW_TO_RANK[FromRow];
         }
 
         if (isCapture && piece.Name == ChessPiece.EName.Pawn) {
