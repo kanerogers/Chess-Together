@@ -8,6 +8,7 @@ public static class PGNExporter {
         var sb = new StringBuilder();
         var isWhite = true;
         var moveStack = new Stack<(Move, bool)>();
+
         while (board.UndoStack.Count != 0) {
             var (move, capturedPiece) = board.UndoStack.Peek();
             var isCapture = capturedPiece != null;
