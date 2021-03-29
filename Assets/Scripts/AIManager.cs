@@ -86,7 +86,7 @@ public static class AIManager {
         // Bottom layer of MinMax:
         if (depth == 0) {
             var score = EvaluateMove(board, move, us, them, canMove);
-            board.Undo();
+            board.Undo(false);
             return (score, depthReached);
         }
 
@@ -97,14 +97,14 @@ public static class AIManager {
         var ourState = board.State[us];
         if (ourState == ChessBoard.BoardStatus.Checkmate) {
             // Logger.Log("AI", $"Move {move} would put us into checkmate");
-            board.Undo();
+            board.Undo(false);
             return (-CHECKMATE_MOVE, depthReached);
         }
 
         var enemyState = board.State[them];
         if (enemyState == ChessBoard.BoardStatus.Checkmate) {
             // Logger.Log("AI", $"Move {move} would put the enemy into checkmate: {board}");
-            board.Undo();
+            board.Undo(false);
             return (CHECKMATE_MOVE, depthReached);
         }
 
@@ -117,10 +117,10 @@ public static class AIManager {
 
             // No further valid moves, return current one
             if (canMove == us) {
-                board.Undo();
+                board.Undo(false);
                 return (-CHECKMATE_MOVE, depthReached);
             } else {
-                board.Undo();
+                board.Undo(false);
                 return (CHECKMATE_MOVE, depthReached);
             }
         }
@@ -129,7 +129,7 @@ public static class AIManager {
         Move bestMove = null;
         foreach (Move moveToEvaluate in validMoves) {
             moveToEvaluate.Score = EvaluateMove(board, moveToEvaluate, us, them, canMove);
-            board.Undo();
+            board.Undo(false);
             if (bestMove == null) bestMove = moveToEvaluate;
             if (canMove == them) {
                 moveToEvaluate.Score *= -1;
