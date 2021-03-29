@@ -111,12 +111,14 @@ public class ChessBoard {
         // Logger.Log($"..done!");
     }
 
-    public void Undo(bool isKingInCheckTest = false) {
+    public void Undo(bool shouldUpdateBoardStatus = true) {
         var (lastMove, removedPiece) = UndoStack.Pop();
 
         UndoPiecesState(lastMove, removedPiece);
         UndoTurn(lastMove);
         UndoEnPassantState(lastMove);
+
+        if (shouldUpdateBoardStatus) UpdateBoardStatus();
     }
 
     public bool IsValidMove(ChessPiece piece, int toRow, int toColumn) {
@@ -251,7 +253,7 @@ public class ChessBoard {
 
                         // If the King is not in check, there is no need to evaluate if this is checkmate.
                         if (State[colour] == BoardStatus.NotInCheck) {
-                            Undo();
+                            Undo(false);
                             // var after = ToString();
                             // if (before != after) {
                             //     throw new Exception($"{before} is not equal to  {after}!");
@@ -266,7 +268,7 @@ public class ChessBoard {
                         if (!king.IsInCheck(Pieces)) {
                             State[colour] = BoardStatus.Check;
                         }
-                        Undo();
+                        Undo(false);
 
                         // {
                         //     var after = ToString();
@@ -456,7 +458,7 @@ public class ChessBoard {
         }
 
         var isInCheck = (king.IsInCheck(Pieces));
-        Undo();
+        Undo(false);
         // var after = ToString();
         // if (before != after) {
         //     throw new Exception($"{before} is not equal to {after}!");
