@@ -7,11 +7,25 @@ namespace Tests {
         const char WHITE = 'W';
         const char BLACK = 'B';
         [Test]
-        public void BugTest() {
+        public void BoardStateTest() {
             var board = GetBoard();
             AIManager.GetMove(board, ChessPiece.EColour.White, AIManager.MoveType.Standard);
             AIManager.GetMove(board, ChessPiece.EColour.Black, AIManager.MoveType.Standard);
             Assert.Pass("Didn't crash!");
+        }
+
+        [Test]
+        public void PGNTest() {
+            var path = "Assets\\Scripts\\Tests\\en_passant_game.pgn";
+            var p = new PGNParser(path);
+            var games = p.Parse(1);
+            var moves = games[0];
+            var board = new ChessBoard();
+            foreach (var move in moves) {
+                board.Move(move);
+                AIManager.GetMove(board, ChessPiece.EColour.White, AIManager.MoveType.Standard);
+                AIManager.GetMove(board, ChessPiece.EColour.Black, AIManager.MoveType.Standard);
+            }
         }
 
         ChessBoard GetBoard() {
