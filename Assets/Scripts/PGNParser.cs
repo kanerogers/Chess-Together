@@ -52,7 +52,6 @@ public class PGNParser {
         while (true) {
             lineNumber++;
             var line = streamReader.ReadLine();
-            Logger.Log("PGNParser", $"Reading lin {lineNumber}: {line}");
             if (line == null) {
                 games.Add(moves);
                 break;
@@ -85,7 +84,6 @@ public class PGNParser {
 
         }
 
-        Logger.Log("PGNParser", $"Parsed {games.Count} games");
         return games;
     }
 

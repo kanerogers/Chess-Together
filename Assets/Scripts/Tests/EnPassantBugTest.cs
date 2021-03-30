@@ -21,10 +21,46 @@ namespace Tests {
             var games = p.Parse(1);
             var moves = games[0];
             var board = new ChessBoard();
+            var canMove = ChessPiece.EColour.White;
             foreach (var move in moves) {
+                // Make move
                 board.Move(move);
-                AIManager.GetMove(board, ChessPiece.EColour.White, AIManager.MoveType.Standard);
-                AIManager.GetMove(board, ChessPiece.EColour.Black, AIManager.MoveType.Standard);
+
+                // Undo it
+                // board.Undo();
+
+                // Make move
+                // board.Move(move);
+
+                // Make the AI think
+                if (board.Turn == 6) Logger.AT_CORRECT_TURN = true;
+                try {
+                    AIManager.GetMove(board, canMove, AIManager.MoveType.Standard);
+                } catch (Exception e) {
+                    Logger.Log("EPBUG", "Caught bug - can move is", canMove, "and turn is", board.Turn);
+                    var pgn = PGNExporter.ToPGN(board);
+                    Logger.Log("EPBUG PGN", pgn);
+                    Logger.Log("EPBUG", e.ToString());
+                    throw e;
+                }
+
+                try {
+                    var aiMove = AIManager.GetMove(board, canMove.Inverse(), AIManager.MoveType.Standard);
+                    // Play an AI move
+                    board.Move(aiMove);
+                } catch (Exception e) {
+                    Logger.Log("EPBUG", "Caught bug - can move is", canMove, "and turn is", board.Turn);
+                    var pgn = PGNExporter.ToPGN(board);
+                    Logger.Log("EPBUG PGN", pgn);
+                    Logger.Log("EPBUG", e.ToString());
+                    throw e;
+                }
+
+
+                // Undo it
+                board.Undo();
+
+                canMove = canMove.Inverse();
             }
         }
 

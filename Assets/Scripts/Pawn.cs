@@ -11,6 +11,8 @@ public class Pawn : ChessPiece {
 
     public override bool CheckMove(ChessPiece[,] pieces, Move move) {
         var (_, _, toRow, toColumn) = move.ToCoordinates();
+        if (move.IsEnPassantCapture && toRow == 2 && toColumn == 3) {
+        }
         // Check basic constraints first
         if (!base.CheckMove(pieces, move)) {
             return false;
