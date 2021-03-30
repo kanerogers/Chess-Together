@@ -46,20 +46,22 @@ public class PGNParser {
     public List<List<Move>> Parse(int numGames = 0) {
         var inHeader = true;
         var games = new List<List<Move>>();
-        var gamesRead = -1;
         var moves = new List<Move>();
 
         // First, we need to skip through the header stuff and get to the moves.
         while (true) {
             lineNumber++;
             var line = streamReader.ReadLine();
-            if (line == null) break;
+            Logger.Log("PGNParser", $"Reading lin {lineNumber}: {line}");
+            if (line == null) {
+                games.Add(moves);
+                break;
+            }
             if (line.StartsWith("[") || line == "") {
                 if (inHeader) continue;
                 else {
                     inHeader = true;
-                    gamesRead++;
-                    if (numGames != 0 && gamesRead >= numGames) return games;
+                    if (numGames != 0 && games.Count >= numGames) break;
                     Board = new ChessBoard();
                     games.Add(moves);
                     moves = new List<Move>();
@@ -83,6 +85,7 @@ public class PGNParser {
 
         }
 
+        Logger.Log("PGNParser", $"Parsed {games.Count} games");
         return games;
     }
 
