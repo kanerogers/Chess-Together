@@ -15,7 +15,7 @@ namespace Tests {
         public void ReadAll() {
             var parser = new PGNParser("Assets\\Scripts\\Tests\\test.pgn");
             var games = parser.Parse();
-            Assert.AreEqual(3251, games.Count);
+            Assert.AreEqual(3252, games.Count);
             ChessBoard board = null;
             var gameIndex = 0;
             try {

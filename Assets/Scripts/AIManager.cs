@@ -86,25 +86,28 @@ public static class AIManager {
         // Bottom layer of MinMax:
         if (depth == 0) {
             var score = EvaluateMove(board, move, us, them, canMove);
-            board.Undo(false);
+            board.Undo();
             return (score, depthReached);
         }
+        if (Logger.AT_CORRECT_TURN && depthReached == 0) Logger.SPECIAL_DEBUG = true;
+        else Logger.SPECIAL_DEBUG = false;
+        Logger.Log("SPECIAL_DEBUG", "whats up");
 
         if (!board.Move(move)) {
-            throw new System.Exception($"Attempted to make invalid move {move} with board state {board}.");
+            throw new System.Exception($"Attempted to make invalid move {move} at depth {depthReached} with board state {board}.");
         }
 
         var ourState = board.State[us];
         if (ourState == ChessBoard.BoardStatus.Checkmate) {
             // Logger.Log("AI", $"Move {move} would put us into checkmate");
-            board.Undo(false);
+            board.Undo();
             return (-CHECKMATE_MOVE, depthReached);
         }
 
         var enemyState = board.State[them];
         if (enemyState == ChessBoard.BoardStatus.Checkmate) {
             // Logger.Log("AI", $"Move {move} would put the enemy into checkmate: {board}");
-            board.Undo(false);
+            board.Undo();
             return (CHECKMATE_MOVE, depthReached);
         }
 
@@ -117,10 +120,10 @@ public static class AIManager {
 
             // No further valid moves, return current one
             if (canMove == us) {
-                board.Undo(false);
+                board.Undo();
                 return (-CHECKMATE_MOVE, depthReached);
             } else {
-                board.Undo(false);
+                board.Undo();
                 return (CHECKMATE_MOVE, depthReached);
             }
         }
@@ -128,6 +131,7 @@ public static class AIManager {
         // Find best move.
         Move bestMove = null;
         foreach (Move moveToEvaluate in validMoves) {
+            Logger.Log("SPECIAL_DEBUG", "Evaluating", moveToEvaluate);
             moveToEvaluate.Score = EvaluateMove(board, moveToEvaluate, us, them, canMove);
             board.Undo(false);
             if (bestMove == null) bestMove = moveToEvaluate;
@@ -138,6 +142,8 @@ public static class AIManager {
                 bestMove = moveToEvaluate;
             }
         }
+
+        Logger.Log("SPECIAL_DEBUG", "Best move is", bestMove);
 
         return MinMax(board, bestMove, us, them, canMove, depth - 1, depthReached + 1);
     }
