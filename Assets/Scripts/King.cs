@@ -33,7 +33,7 @@ public class King : ChessPiece {
     }
 
     public bool IsCastling(ChessPiece[,] pieces, Move move) {
-        var (_, _, toRow, toColumn) = move.ToCoordinates();
+        var (fromRow, _, toRow, toColumn) = move.ToCoordinates();
         // We can't do this check in strict order of the FIDE rules both for optimisation and
         // for sanity reasons, eg. we need to check there are no intervening pieces before we can
         // move the king along its squares in order to check if it will be attacked.
@@ -43,9 +43,11 @@ public class King : ChessPiece {
         // on the player’s first rank
         // Logger.Log("IsCastling", "In IsCastling..");
 
+
         // Check for first rank
         var firstRank = IsBlack() ? 0 : 7;
-        if (toRow != firstRank) {
+
+        if (fromRow != firstRank || toRow != firstRank) {
             // Logger.Log("IsCastling", $"{toRow} is not {firstRank}");
             return false;
         }
@@ -107,7 +109,7 @@ public class King : ChessPiece {
         var p = pieces[Row, squareToCross];
 
         if (p != null) {
-            throw new Exception($"INVALID STATE: Found {p}");
+            throw new Exception($"INVALID STATE: Found {p}. Attempted castle was {move}");
         }
         pieces[Row, squareToCross] = this;
         Column = squareToCross;

@@ -18,6 +18,7 @@ namespace Tests {
             var boardString = File.ReadAllLines(path);
             var board = new ChessBoard(true);
             ParseBoardString(boardString[0], board);
+            board.UpdateBoardStatus();
             return board;
         }
 
@@ -57,7 +58,6 @@ namespace Tests {
                             if (nc == 'n') name = ChessPiece.EName.Knight;
                         }
 
-                        Logger.Log("PARSE BOARD", "Creating piece", colour, name, row, column);
                         board.CreatePiece(name, row, column, colour);
                         break;
                         // case State.LookingForRow:
