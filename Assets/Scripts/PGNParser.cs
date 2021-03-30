@@ -3,7 +3,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 public class PGNParser {
     StreamReader streamReader;
-    internal ChessBoard Board;
+    public ChessBoard Board;
     public PGNParser(string filename) {
         streamReader = new StreamReader(filename);
         Board = new ChessBoard();

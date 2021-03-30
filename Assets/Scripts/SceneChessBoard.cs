@@ -123,6 +123,8 @@ public class SceneChessBoard : MonoBehaviour {
     public bool Move(Move move) {
         var obj = Pieces[move.FromRow, move.FromColumn];
         if (!obj) {
+            var pgn = PGNExporter.ToPGN(LogicBoard);
+            Debug.LogError(pgn);
             throw new Exception($"No piece found at {move.FromRow},{move.FromColumn}");
         }
 

@@ -9,7 +9,8 @@ namespace Tests {
         [Test]
         public void BugTest() {
             var board = GetBoard();
-            var nextMove = AIManager.GetMove(board, ChessPiece.EColour.White, AIManager.MoveType.Standard);
+            AIManager.GetMove(board, ChessPiece.EColour.White, AIManager.MoveType.Standard);
+            AIManager.GetMove(board, ChessPiece.EColour.Black, AIManager.MoveType.Standard);
             Assert.Pass("Didn't crash!");
         }
 
