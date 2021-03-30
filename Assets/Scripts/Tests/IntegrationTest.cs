@@ -81,8 +81,6 @@ namespace Tests {
             var openingMove = new Move(6, 0, 4, 0);
             yield return MovePiece(sceneBoard, openingMove);
             var logicBoard = gameManager.LogicBoard;
-            var whiteState = logicBoard.State[ChessPiece.EColour.White];
-            var blackState = logicBoard.State[ChessPiece.EColour.Black];
             var finished = false;
 
 
@@ -103,6 +101,9 @@ namespace Tests {
                 Assert.AreEqual(ChessPiece.EColour.White, piece.Colour);
                 Assert.AreEqual(toRow, piece.Row);
                 Assert.AreEqual(toColumn, piece.Column);
+
+                var whiteState = logicBoard.State[ChessPiece.EColour.White];
+                var blackState = logicBoard.State[ChessPiece.EColour.Black];
                 finished = (whiteState == ChessBoard.BoardStatus.Checkmate || blackState == ChessBoard.BoardStatus.Checkmate);
             }
         }
