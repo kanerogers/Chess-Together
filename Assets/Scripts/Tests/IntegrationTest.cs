@@ -81,16 +81,22 @@ namespace Tests {
             var openingMove = new Move(6, 0, 4, 0);
             yield return MovePiece(sceneBoard, openingMove);
             var logicBoard = gameManager.LogicBoard;
-            var finished = false;
+            Move nextMove = null;
 
-
-            while (!finished) {
+            while (true) {
                 // Wait for the AI to make its turn.
                 while (gameManager.CanMove != ChessPiece.EColour.White) {
                     yield return null;
                 }
 
-                var nextMove = AIManager.GetMove(logicBoard, ChessPiece.EColour.White, AIManager.MoveType.Standard);
+                try {
+                    nextMove = AIManager.GetMove(logicBoard, ChessPiece.EColour.White, AIManager.MoveType.Standard);
+                } catch (System.Exception e) {
+                    var pgn = PGNExporter.ToPGN(logicBoard);
+                    Debug.Log(pgn);
+                    throw e;
+                }
+
                 Debug.Log($"[{gameManager.Turn}] Making {nextMove}..");
                 var (fromRow, fromColumn, toRow, toColumn) = nextMove.ToCoordinates();
                 var expectedPieceName = sceneBoard.Pieces[fromRow, fromColumn].GetComponent<SceneChessPiece>().Piece.Name;
@@ -104,8 +110,11 @@ namespace Tests {
 
                 var whiteState = logicBoard.State[ChessPiece.EColour.White];
                 var blackState = logicBoard.State[ChessPiece.EColour.Black];
-                finished = (whiteState == ChessBoard.BoardStatus.Checkmate || blackState == ChessBoard.BoardStatus.Checkmate);
+                if (whiteState == ChessBoard.BoardStatus.Checkmate || blackState == ChessBoard.BoardStatus.Checkmate || whiteState == ChessBoard.BoardStatus.Stalemate || blackState == ChessBoard.BoardStatus.Stalemate) {
+                    Assert.Pass($"Game completed successfully");
+                }
             }
+
         }
     }
 }
