@@ -48,6 +48,9 @@ public class ChessBoard {
     }
 
     public bool Move(Move move, bool checkIfKingIsInCheck = true, bool checkStateAfterMove = true) {
+        if (Logger.SPECIAL_DEBUG && checkIfKingIsInCheck && checkStateAfterMove) {
+            Logger.Log("SPECIAL_DEBUG", "debugger");
+        }
         // Logger.Log("SPECIAL_DEBUG", $"Making move {move}");
         // Is this move valid?
         if (!IsValid(move, checkIfKingIsInCheck)) return false;
@@ -373,7 +376,7 @@ public class ChessBoard {
 
         // If there was a pawn that previously could be captured, now it can't.
         invalidatedPawn = PawnThatCanBeCapturedWithEnpassant;
-        if (invalidatedPawn != null && invalidatedPawn.Row != toRow && invalidatedPawn.Column != toColumn) {
+        if (invalidatedPawn != null && (invalidatedPawn.Row != toRow || invalidatedPawn.Column != toColumn)) {
             // Logger.Log("UPDATE EP", $"{invalidatedPawn} now cannot be captured");
             invalidatedPawn.CanBeCapturedByEnpassant = false;
             PawnThatCanBeCapturedWithEnpassant = null;
