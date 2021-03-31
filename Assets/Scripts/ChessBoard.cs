@@ -48,7 +48,7 @@ public class ChessBoard {
     }
 
     public bool Move(Move move, bool checkIfKingIsInCheck = true, bool checkStateAfterMove = true) {
-        // Logger.Log("MOVES", $"Making move {move}");
+        // Logger.Log("SPECIAL_DEBUG", $"Making move {move}");
         // Is this move valid?
         if (!IsValid(move, checkIfKingIsInCheck)) return false;
 
@@ -376,22 +376,19 @@ public class ChessBoard {
         // If there was a pawn that previously could be captured, now it can't.
         invalidatedPawn = PawnThatCanBeCapturedWithEnpassant;
         if (invalidatedPawn != null && invalidatedPawn.Row != toRow && invalidatedPawn.Column != toColumn) {
-            Logger.Log("UPDATE EP", $"{invalidatedPawn} now cannot be captured");
+            // Logger.Log("UPDATE EP", $"{invalidatedPawn} now cannot be captured");
             invalidatedPawn.CanBeCapturedByEnpassant = false;
             PawnThatCanBeCapturedWithEnpassant = null;
-            Logger.Log("UPDATE EP", $"PawnThatCanBeCapturedWithEnpassant is now null");
+            // Logger.Log("UPDATE EP", $"PawnThatCanBeCapturedWithEnpassant is now null");
         }
 
         var piece = Pieces[toRow, toColumn];
         if (piece.Name == ChessPiece.EName.Pawn) {
             var pawn = (Pawn)piece;
             if (pawn.CanBeCapturedByEnpassant) {
-                if (pawn.Colour == ChessPiece.EColour.White && pawn.Row == 3) {
-                    throw new Exception($"{pawn} cannot possibly be captured by En Passant!");
-                }
                 updatedPawn = pawn;
                 PawnThatCanBeCapturedWithEnpassant = pawn;
-                Logger.Log("UPDATE EP", $"PawnThatCanBeCapturedWithEnpassant is now {pawn}");
+                // Logger.Log("UPDATE EP", $"PawnThatCanBeCapturedWithEnpassant is now {pawn}");
             }
         }
 
@@ -405,15 +402,15 @@ public class ChessBoard {
 
         // invalidatedPawn was set to false on the previous move, now set it to true.
         if (invalidatedPawn != null) {
-            Logger.Log("UNDO EP", $"Restoring EnPassant state for {invalidatedPawn} = true");
+            // Logger.Log("UNDO EP", $"Restoring EnPassant state for {invalidatedPawn} = true");
             PawnThatCanBeCapturedWithEnpassant = invalidatedPawn;
             invalidatedPawn.CanBeCapturedByEnpassant = true;
-            Logger.Log("UNDO EP", $"PawnThatCanBeCapturedWithEnpassant is now {invalidatedPawn}");
+            // Logger.Log("UNDO EP", $"PawnThatCanBeCapturedWithEnpassant is now {invalidatedPawn}");
         }
 
         // updatedPawn was set to true on the previous move, now set it to false.
         if (updatedPawn != null) {
-            Logger.Log("UNDO EP", $"Restoring EnPassant state for {toRow},{toColumn} = false");
+            // Logger.Log("UNDO EP", $"Restoring EnPassant state for {toRow},{toColumn} = false");
             updatedPawn.CanBeCapturedByEnpassant = false;
         }
     }

@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using System.Collections;
 
-namespace Tests {
+namespace IntegrationTests {
     public class IntegrationTest {
         IEnumerator LoadScene() {
             AsyncOperation asyncLoad = SceneManager.LoadSceneAsync("Main");

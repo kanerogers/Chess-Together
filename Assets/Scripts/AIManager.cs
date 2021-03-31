@@ -86,7 +86,7 @@ public static class AIManager {
         // Bottom layer of MinMax:
         if (depth == 0) {
             var score = EvaluateMove(board, move, us, them, canMove);
-            board.Undo();
+            board.Undo(false);
             return (score, depthReached);
         }
         if (Logger.AT_CORRECT_TURN && depthReached == 0) Logger.SPECIAL_DEBUG = true;
@@ -100,14 +100,14 @@ public static class AIManager {
         var ourState = board.State[us];
         if (ourState == ChessBoard.BoardStatus.Checkmate) {
             // Logger.Log("AI", $"Move {move} would put us into checkmate");
-            board.Undo();
+            board.Undo(false);
             return (-CHECKMATE_MOVE, depthReached);
         }
 
         var enemyState = board.State[them];
         if (enemyState == ChessBoard.BoardStatus.Checkmate) {
             // Logger.Log("AI", $"Move {move} would put the enemy into checkmate: {board}");
-            board.Undo();
+            board.Undo(false);
             return (CHECKMATE_MOVE, depthReached);
         }
 
@@ -120,10 +120,10 @@ public static class AIManager {
 
             // No further valid moves, return current one
             if (canMove == us) {
-                board.Undo();
+                board.Undo(false);
                 return (-CHECKMATE_MOVE, depthReached);
             } else {
-                board.Undo();
+                board.Undo(false);
                 return (CHECKMATE_MOVE, depthReached);
             }
         }
@@ -133,6 +133,7 @@ public static class AIManager {
         foreach (Move moveToEvaluate in validMoves) {
             Logger.Log("SPECIAL_DEBUG", "Evaluating", moveToEvaluate);
             moveToEvaluate.Score = EvaluateMove(board, moveToEvaluate, us, them, canMove);
+            if (Logger.SPECIAL_DEBUG) Logger.SPECIAL_DEBUG = false;
             board.Undo(false);
             if (bestMove == null) bestMove = moveToEvaluate;
             if (canMove == them) {
@@ -150,7 +151,8 @@ public static class AIManager {
 
     static int EvaluateMove(ChessBoard board, Move move, ChessPiece.EColour us, ChessPiece.EColour them, ChessPiece.EColour canMove) {
         // Logger.Log("AI", $"AI Manager evaluating {move}");
-        if (!board.Move(move)) {
+        // There's no need to check the state or if the king is in check because we've done that already - we're evaluating a *proven valid* move.
+        if (!board.Move(move, checkIfKingIsInCheck: false, checkStateAfterMove: false)) {
             throw new System.Exception($"Attempted to make invalid move {move} with board state {board}");
         }
 
