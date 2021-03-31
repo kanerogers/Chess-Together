@@ -22,9 +22,13 @@ public static class AIManager {
         }
 
         var previousBoard = board.ToString();
+        var ind = 0;
 
         foreach (Move move in validMoves) {
             int depthReached;
+            if (ind == 21) Logger.AT_CORRECT_MOVE = true;
+            else Logger.AT_CORRECT_MOVE = false;
+            Logger.Log("SPECIAL_DEBUG", ind);
             (move.Score, depthReached) = MinMax(board, move, AI, AI.Inverse(), AI, MINMAX_DEPTH);
 
             for (int i = 0; i < depthReached; i++) {
@@ -34,6 +38,7 @@ public static class AIManager {
             if (move.Score > bestScore) {
                 bestScore = move.Score;
             }
+            ind++;
         }
 
         var bestMoves = validMoves.FindAll(m => m.Score == bestScore);
@@ -89,9 +94,13 @@ public static class AIManager {
             board.Undo(false);
             return (score, depthReached);
         }
-        if (Logger.AT_CORRECT_TURN && depthReached == 0) Logger.SPECIAL_DEBUG = true;
+        if (Logger.AT_CORRECT_TURN && Logger.AT_CORRECT_MOVE) Logger.SPECIAL_DEBUG = true;
         else Logger.SPECIAL_DEBUG = false;
-        Logger.Log("SPECIAL_DEBUG", "whats up");
+        Logger.Log("SPECIAL_DEBUG", "whats up", board.Turn, move);
+
+        if (Logger.SPECIAL_DEBUG) {
+            Logger.Log("SPECIAL_DEBUG", "debugger", board.Turn, move);
+        }
 
         if (!board.Move(move)) {
             throw new System.Exception($"Attempted to make invalid move {move} at depth {depthReached} with board state {board}.");
@@ -131,9 +140,10 @@ public static class AIManager {
         // Find best move.
         Move bestMove = null;
         foreach (Move moveToEvaluate in validMoves) {
-            Logger.Log("SPECIAL_DEBUG", "Evaluating", moveToEvaluate);
+            if (Logger.SPECIAL_DEBUG && moveToEvaluate.ToRow == 2 && moveToEvaluate.ToColumn == 4) {
+                Logger.Log("SPECIAL_DEBUG", "Evaluating", moveToEvaluate, depthReached, board.Turn);
+            }
             moveToEvaluate.Score = EvaluateMove(board, moveToEvaluate, us, them, canMove);
-            if (Logger.SPECIAL_DEBUG) Logger.SPECIAL_DEBUG = false;
             board.Undo(false);
             if (bestMove == null) bestMove = moveToEvaluate;
             if (canMove == them) {

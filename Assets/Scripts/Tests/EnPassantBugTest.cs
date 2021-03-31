@@ -33,14 +33,16 @@ namespace Tests {
                 // board.Move(move);
 
                 // Make the AI think
-                if (board.Turn == 6) Logger.AT_CORRECT_TURN = true;
+                if (board.Turn == 44) Logger.AT_CORRECT_TURN = true;
                 try {
                     AIManager.GetMove(board, canMove, AIManager.MoveType.Standard);
                 } catch (Exception e) {
+                    Logger.SPECIAL_DEBUG = false;
                     Logger.Log("EPBUG", "Caught bug - can move is", canMove, "and turn is", board.Turn);
                     var pgn = PGNExporter.ToPGN(board);
                     Logger.Log("EPBUG PGN", pgn);
                     Logger.Log("EPBUG", e.ToString());
+                    Logger.Log(e.ToString());
                     throw e;
                 }
 

@@ -206,17 +206,15 @@ public class ChessBoard {
                         // var before = ToString();
                         var move = new Move(fromRow, fromColumn, toRow, toColumn);
                         var pieceAtDestination = Pieces[toRow, toColumn];
-                        if (move.IsEnPassantCapture) {
-                            var pawn = (Pawn)piece;
-                            var enPassantRow = pawn.GetEnPassantRow(toRow);
-                            pieceAtDestination = Pieces[enPassantRow, toColumn];
-                            if (pieceAtDestination == null) {
-                                throw new Exception($"Attempted to capture piece at {enPassantRow},{toColumn}.");
-                            }
-                        }
 
                         // If this move is invalid, continue.
+                        if (Logger.SPECIAL_DEBUG && fromRow == 3 && fromColumn == 3 && toRow == 2 && toColumn == 4 && piece.Name == ChessPiece.EName.Pawn) {
+                            Logger.Log("SPECIAL_DEBUG", "hey");
+                        }
+
                         if (!Move(move, checkIfKingIsInCheck: true, checkStateAfterMove: false)) continue;
+
+
                         if (fromRow == toRow && fromColumn == toColumn) {
                             throw new Exception($"Move {move} is invalid! It's the same square!");
                         }
