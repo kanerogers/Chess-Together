@@ -1,6 +1,13 @@
 using System;
 public class Pawn : ChessPiece {
-    public bool CanBeCapturedByEnpassant = false;
+    private bool canBeCapturedByEnPassant;
+    public bool CanBeCapturedByEnpassant {
+        get => canBeCapturedByEnPassant;
+        set {
+            canBeCapturedByEnPassant = value;
+            // Logger.Log("UPDATE EP", this, "canBeCapturedByEnPassant", canBeCapturedByEnPassant);
+        }
+    }
 
     public Pawn(EColour colour, int row, int column) {
         Colour = colour;
