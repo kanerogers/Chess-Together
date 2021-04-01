@@ -21,18 +21,25 @@ public static class AIManager {
             throw new System.Exception($"Wuh woh, no valid moves left. Board state is {board}");
         }
 
-        var previousBoard = board.ToString();
         var ind = 0;
 
         foreach (Move move in validMoves) {
             int depthReached;
-            if (ind == 21) Logger.AT_CORRECT_MOVE = true;
-            else Logger.AT_CORRECT_MOVE = false;
-            Logger.Log("SPECIAL_DEBUG", ind);
+            // if (ind == 21) Logger.AT_CORRECT_MOVE = true;
+            // else Logger.AT_CORRECT_MOVE = false;
+            if (Logger.AT_CORRECT_MOVE && ind == 17) {
+                Logger.SPECIAL_DEBUG = true;
+            }
+
             (move.Score, depthReached) = MinMax(board, move, AI, AI.Inverse(), AI, MINMAX_DEPTH);
 
+
             for (int i = 0; i < depthReached; i++) {
-                board.Undo();
+                try {
+                    board.Undo();
+                } catch (System.Exception e) {
+                    throw e;
+                }
             }
 
             if (move.Score > bestScore) {
@@ -48,11 +55,6 @@ public static class AIManager {
 
         var random = new System.Random();
         var chosenMove = bestMoves[random.Next(bestMoves.Count - 1)];
-
-        var boardAfter = board.ToString();
-        if (previousBoard != boardAfter) {
-            throw new System.Exception($"{previousBoard} does not match {boardAfter}!");
-        }
 
         return chosenMove;
     }
@@ -94,13 +96,9 @@ public static class AIManager {
             board.Undo(false);
             return (score, depthReached);
         }
-        if (Logger.AT_CORRECT_TURN && Logger.AT_CORRECT_MOVE) Logger.SPECIAL_DEBUG = true;
-        else Logger.SPECIAL_DEBUG = false;
-        Logger.Log("SPECIAL_DEBUG", "whats up", board.Turn, move);
 
-        if (Logger.SPECIAL_DEBUG) {
-            Logger.Log("SPECIAL_DEBUG", "debugger", board.Turn, move);
-        }
+        // if (Logger.AT_CORRECT_TURN && Logger.AT_CORRECT_MOVE) Logger.SPECIAL_DEBUG = true;
+        // else Logger.SPECIAL_DEBUG = false;
 
         if (!board.Move(move)) {
             throw new System.Exception($"Attempted to make invalid move {move} at depth {depthReached} with board state {board}.");
@@ -109,14 +107,14 @@ public static class AIManager {
         var ourState = board.State[us];
         if (ourState == ChessBoard.BoardStatus.Checkmate) {
             // Logger.Log("AI", $"Move {move} would put us into checkmate");
-            board.Undo(false);
+            board.Undo();
             return (-CHECKMATE_MOVE, depthReached);
         }
 
         var enemyState = board.State[them];
         if (enemyState == ChessBoard.BoardStatus.Checkmate) {
             // Logger.Log("AI", $"Move {move} would put the enemy into checkmate: {board}");
-            board.Undo(false);
+            board.Undo();
             return (CHECKMATE_MOVE, depthReached);
         }
 
@@ -140,11 +138,34 @@ public static class AIManager {
         // Find best move.
         Move bestMove = null;
         foreach (Move moveToEvaluate in validMoves) {
-            if (Logger.SPECIAL_DEBUG && moveToEvaluate.ToRow == 2 && moveToEvaluate.ToColumn == 4) {
-                Logger.Log("SPECIAL_DEBUG", "Evaluating", moveToEvaluate, depthReached, board.Turn);
-            }
             moveToEvaluate.Score = EvaluateMove(board, moveToEvaluate, us, them, canMove);
+            if (board.PawnThatCanBeCapturedWithEnpassant?.Row == 1) {
+                Logger.Log("hey");
+            }
+
+            if (Logger.SPECIAL_DEBUG && depthReached == 2) {
+                if (moveToEvaluate.ToRow == 0 && moveToEvaluate.ToColumn == 4) {
+                    Logger.Log("hey");
+                }
+            }
+
+            if (depthReached == 1 && moveToEvaluate.FromRow == 3 && moveToEvaluate.FromColumn == 4 && moveToEvaluate.ToRow == 2 && moveToEvaluate.ToColumn == 4) {
+                Logger.Log("hey");
+            }
+
             board.Undo(false);
+            if (board.PawnThatCanBeCapturedWithEnpassant?.Row == 1) {
+                Logger.Log("hey");
+            }
+
+            if (Logger.SPECIAL_DEBUG && depthReached == 2) {
+                var bad = board.Pieces[0, 4];
+                if (bad != null && bad.Name == ChessPiece.EName.Pawn) {
+                    Logger.Log("hey");
+                }
+            }
+
+
             if (bestMove == null) bestMove = moveToEvaluate;
             if (canMove == them) {
                 moveToEvaluate.Score *= -1;
@@ -153,8 +174,6 @@ public static class AIManager {
                 bestMove = moveToEvaluate;
             }
         }
-
-        Logger.Log("SPECIAL_DEBUG", "Best move is", bestMove);
 
         return MinMax(board, bestMove, us, them, canMove, depth - 1, depthReached + 1);
     }

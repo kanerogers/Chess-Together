@@ -48,10 +48,6 @@ public class ChessBoard {
     }
 
     public bool Move(Move move, bool checkIfKingIsInCheck = true, bool checkStateAfterMove = true) {
-        if (Logger.SPECIAL_DEBUG && checkIfKingIsInCheck && checkStateAfterMove) {
-            Logger.Log("SPECIAL_DEBUG", "debugger");
-        }
-        // Logger.Log("SPECIAL_DEBUG", $"Making move {move}");
         // Is this move valid?
         if (!IsValid(move, checkIfKingIsInCheck)) return false;
 
@@ -116,6 +112,10 @@ public class ChessBoard {
 
     public void Undo(bool shouldUpdateBoardStatus = true) {
         var (lastMove, removedPiece) = UndoStack.Pop();
+        var (invalidatedPawn, updatedPawn) = lastMove.PreviousEnPassantState;
+        if (invalidatedPawn != null) {
+            Logger.Log("DESTROY");
+        }
 
         UndoPiecesState(lastMove, removedPiece);
         UndoTurn(lastMove);
@@ -375,8 +375,14 @@ public class ChessBoard {
         Pawn updatedPawn = null;
 
         // If there was a pawn that previously could be captured, now it can't.
-        invalidatedPawn = PawnThatCanBeCapturedWithEnpassant;
-        if (invalidatedPawn != null && (invalidatedPawn.Row != toRow || invalidatedPawn.Column != toColumn)) {
+        invalidatedPawn = null;
+        var epPawn = PawnThatCanBeCapturedWithEnpassant;
+
+        // IMPORTANT! If our last move was the one that set our EnPassantState to begin with (eg. a double square pawn move)
+        // we MUST check to make sure that we're not invalidating the move that was just made
+        // TODO: shouldn't we do this BEFORE we update the rest of the state?
+        if (epPawn != null && epPawn.Row != toRow && epPawn.Column != toColumn) {
+            invalidatedPawn = epPawn;
             // Logger.Log("UPDATE EP", $"{invalidatedPawn} now cannot be captured");
             invalidatedPawn.CanBeCapturedByEnpassant = false;
             PawnThatCanBeCapturedWithEnpassant = null;
@@ -387,10 +393,17 @@ public class ChessBoard {
         if (piece.Name == ChessPiece.EName.Pawn) {
             var pawn = (Pawn)piece;
             if (pawn.CanBeCapturedByEnpassant) {
+                if (pawn.Row == 1) {
+                    throw new Exception($"Impossible {pawn} - a pawn cannot be on row 1 and CanBeCapturedByEnpassant");
+                }
                 updatedPawn = pawn;
                 PawnThatCanBeCapturedWithEnpassant = pawn;
                 // Logger.Log("UPDATE EP", $"PawnThatCanBeCapturedWithEnpassant is now {pawn}");
             }
+        }
+
+        if (invalidatedPawn?.Row == 1) {
+            throw new Exception($"Impossible {invalidatedPawn} - invalidated pawn cannot be on row 1 and CanBeCapturedByEnpassant");
         }
 
         move.PreviousEnPassantState = (invalidatedPawn, updatedPawn);
@@ -401,13 +414,19 @@ public class ChessBoard {
         var (invalidatedPawn, updatedPawn) = lastMove.PreviousEnPassantState;
         // Restore any en passant state
 
+        // If null, then set to null again.
+        PawnThatCanBeCapturedWithEnpassant = invalidatedPawn;
+
         // invalidatedPawn was set to false on the previous move, now set it to true.
         if (invalidatedPawn != null) {
             // Logger.Log("UNDO EP", $"Restoring EnPassant state for {invalidatedPawn} = true");
-            PawnThatCanBeCapturedWithEnpassant = invalidatedPawn;
             invalidatedPawn.CanBeCapturedByEnpassant = true;
             // Logger.Log("UNDO EP", $"PawnThatCanBeCapturedWithEnpassant is now {invalidatedPawn}");
+            if (PawnThatCanBeCapturedWithEnpassant?.Row == 1) {
+                throw new Exception($"Impossible {invalidatedPawn} - invalidated pawn cannot be on row 1 and CanBeCapturedByEnpassant");
+            }
         }
+
 
         // updatedPawn was set to true on the previous move, now set it to false.
         if (updatedPawn != null) {
