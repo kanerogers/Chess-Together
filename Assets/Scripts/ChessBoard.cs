@@ -223,7 +223,7 @@ public class ChessBoard {
                         var pieceAtDestination = Pieces[toRow, toColumn];
 
                         // If this move is invalid, continue.
-                        if (hasEp && fromRow == 1 && fromColumn == 4 && toRow == 2 && toColumn == 4) {
+                        if (hasEp && fromRow == 4 && fromColumn == 4 && toRow == 3 && toColumn == 4) {
                             Logger.Log("debug");
                         }
 
