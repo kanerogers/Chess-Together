@@ -53,9 +53,16 @@ public class ChessBoard {
 
         // Move is valid! Update state.
         UpdateState(move);
+        var ep = PawnThatCanBeCapturedWithEnpassant;
+        if (move.FromRow == 6 && move.ToRow == 4 && move.FromColumn == 4 && move.ToColumn == 4 && checkStateAfterMove) {
+            Logger.Log("hey");
+        }
 
         // Check the status of the board.
         if (checkStateAfterMove) UpdateBoardStatus();
+        if (ep != null && PawnThatCanBeCapturedWithEnpassant == null) {
+            throw new Exception("INVARIANT VIOLATION - PawnThatCanBeCapturedWithEnPassant was wiped!");
+        }
 
         // Done!
         return true;
@@ -113,9 +120,6 @@ public class ChessBoard {
     public void Undo(bool shouldUpdateBoardStatus = true) {
         var (lastMove, removedPiece) = UndoStack.Pop();
         var (invalidatedPawn, updatedPawn) = lastMove.PreviousEnPassantState;
-        if (invalidatedPawn != null) {
-            Logger.Log("DESTROY");
-        }
 
         UndoPiecesState(lastMove, removedPiece);
         UndoTurn(lastMove);
@@ -193,6 +197,10 @@ public class ChessBoard {
         // Clear all our valid moves.
         ValidMoves[ChessPiece.EColour.Black].Clear();
         ValidMoves[ChessPiece.EColour.White].Clear();
+        var hasEp = PawnThatCanBeCapturedWithEnpassant != null;
+        if (hasEp) {
+            Logger.Log("debug");
+        }
 
         // Iterate through all pieces on the board and check their valid moves.
         for (int fromRow = 0; fromRow < 8; fromRow++) {
@@ -206,13 +214,17 @@ public class ChessBoard {
 
                 for (int toRow = 0; toRow < 8; toRow++) {
                     for (int toColumn = 0; toColumn < 8; toColumn++) {
+                        if (hasEp && PawnThatCanBeCapturedWithEnpassant == null) {
+                            throw new Exception("Invalid state! PawnThatCanBeCapturedWithEnPassant has been cleared!");
+                        }
+
                         // var before = ToString();
                         var move = new Move(fromRow, fromColumn, toRow, toColumn);
                         var pieceAtDestination = Pieces[toRow, toColumn];
 
                         // If this move is invalid, continue.
-                        if (Logger.SPECIAL_DEBUG && fromRow == 3 && fromColumn == 3 && toRow == 2 && toColumn == 4 && piece.Name == ChessPiece.EName.Pawn) {
-                            Logger.Log("SPECIAL_DEBUG", "hey");
+                        if (hasEp && fromRow == 1 && fromColumn == 4 && toRow == 2 && toColumn == 4) {
+                            Logger.Log("debug");
                         }
 
                         if (!Move(move, checkIfKingIsInCheck: true, checkStateAfterMove: false)) continue;
@@ -254,7 +266,13 @@ public class ChessBoard {
 
                         // If the King is not in check, there is no need to evaluate if this is checkmate.
                         if (State[colour] == BoardStatus.NotInCheck) {
+                            if (hasEp && fromRow == 1 && fromColumn == 4 && toRow == 2 && toColumn == 4) {
+                                Logger.Log("holaaaaaaaaaaaaaaaaaaaaaaaa");
+                            }
                             Undo(false);
+                            if (hasEp && PawnThatCanBeCapturedWithEnpassant == null) {
+                                throw new Exception("derp");
+                            }
                             // var after = ToString();
                             // if (before != after) {
                             //     throw new Exception($"{before} is not equal to  {after}!");
@@ -381,7 +399,7 @@ public class ChessBoard {
         // IMPORTANT! If our last move was the one that set our EnPassantState to begin with (eg. a double square pawn move)
         // we MUST check to make sure that we're not invalidating the move that was just made
         // TODO: shouldn't we do this BEFORE we update the rest of the state?
-        if (epPawn != null && epPawn.Row != toRow && epPawn.Column != toColumn) {
+        if (epPawn != null && (epPawn.Row != toRow || epPawn.Column != toColumn)) {
             invalidatedPawn = epPawn;
             // Logger.Log("UPDATE EP", $"{invalidatedPawn} now cannot be captured");
             invalidatedPawn.CanBeCapturedByEnpassant = false;

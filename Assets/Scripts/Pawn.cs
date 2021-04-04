@@ -18,8 +18,6 @@ public class Pawn : ChessPiece {
 
     public override bool CheckMove(ChessPiece[,] pieces, Move move) {
         var (_, _, toRow, toColumn) = move.ToCoordinates();
-        if (move.IsEnPassantCapture && toRow == 2 && toColumn == 3) {
-        }
         // Check basic constraints first
         if (!base.CheckMove(pieces, move)) {
             return false;
@@ -63,6 +61,10 @@ public class Pawn : ChessPiece {
                 if (IsEnPassantCapture(toRow, toColumn, pieces)) {
                     move.IsEnPassantCapture = true;
                     return true;
+                } else {
+                    if (move.IsEnPassantCapture) {
+                        throw new Exception("YES IT FUCKING IT IS FUCK YOU");
+                    }
                 }
 
                 // Logger.Log($"Pawn cannot move to {toRow},{toColumn} as there is no piece on that square");
