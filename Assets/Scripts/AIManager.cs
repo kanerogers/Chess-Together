@@ -97,8 +97,11 @@ public static class AIManager {
             return (score, depthReached);
         }
 
-        // if (Logger.AT_CORRECT_TURN && Logger.AT_CORRECT_MOVE) Logger.SPECIAL_DEBUG = true;
-        // else Logger.SPECIAL_DEBUG = false;
+        if (move.FromRow == 6 && move.FromColumn == 2 && move.ToRow == 4 && move.ToColumn == 2) {
+            if (board.Turn == 11) {
+                Logger.Log("hola");
+            }
+        }
 
         if (!board.Move(move)) {
             throw new System.Exception($"Attempted to make invalid move {move} at depth {depthReached} with board state {board}.");
@@ -139,32 +142,7 @@ public static class AIManager {
         Move bestMove = null;
         foreach (Move moveToEvaluate in validMoves) {
             moveToEvaluate.Score = EvaluateMove(board, moveToEvaluate, us, them, canMove);
-            if (board.PawnThatCanBeCapturedWithEnpassant?.Row == 1) {
-                Logger.Log("hey");
-            }
-
-            if (Logger.SPECIAL_DEBUG && depthReached == 2) {
-                if (moveToEvaluate.ToRow == 0 && moveToEvaluate.ToColumn == 4) {
-                    Logger.Log("hey");
-                }
-            }
-
-            if (depthReached == 1 && moveToEvaluate.FromRow == 3 && moveToEvaluate.FromColumn == 4 && moveToEvaluate.ToRow == 2 && moveToEvaluate.ToColumn == 4) {
-                Logger.Log("hey");
-            }
-
             board.Undo(false);
-            if (board.PawnThatCanBeCapturedWithEnpassant?.Row == 1) {
-                Logger.Log("hey");
-            }
-
-            if (Logger.SPECIAL_DEBUG && depthReached == 2) {
-                var bad = board.Pieces[0, 4];
-                if (bad != null && bad.Name == ChessPiece.EName.Pawn) {
-                    Logger.Log("hey");
-                }
-            }
-
 
             if (bestMove == null) bestMove = moveToEvaluate;
             if (canMove == them) {
