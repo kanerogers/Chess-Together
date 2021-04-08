@@ -23,9 +23,7 @@ namespace IntegrationTests {
             // We gotta wait for the splash screen to finish
             var boardInterfaceManager = gameManager.boardInterfaceManager;
             yield return new WaitForSeconds(5);
-            Debug.Log("henlo");
             boardInterfaceManager.LeftButtonPressed();
-            Debug.Log("pressed");
             yield return null;
         }
 

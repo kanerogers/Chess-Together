@@ -28,7 +28,7 @@ public class ChessButton : MonoBehaviour {
             if (!pressed) {
                 pressed = true;
                 // If we have an event, invoke it
-                // downEvent?.Invoke();
+                downEvent?.Invoke();
             }
         } else {
             // If we aren't all the way down, reset our press

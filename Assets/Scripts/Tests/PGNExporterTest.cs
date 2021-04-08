@@ -1,7 +1,7 @@
 ﻿using NUnit.Framework;
 using System.IO;
 
-namespace Tests {
+namespace UnitTests {
     public class PGNExporterTest {
         [Test]
         public void BasicPGNTest() {
