@@ -1,3 +1,24 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:4b8e82e75303c4bb8ceb01e604ae07cd457a4c998cae6af99dee669eaa975598
-size 679
+// This file was @generated with LibOVRPlatform/codegen/main. Do not modify it!
+
+namespace Oculus.Platform.Models
+{
+  using System;
+  using System.Collections;
+  using Oculus.Platform.Models;
+  using System.Collections.Generic;
+  using UnityEngine;
+
+  public class MatchmakingAdminSnapshot
+  {
+    public readonly MatchmakingAdminSnapshotCandidateList Candidates;
+    public readonly double MyCurrentThreshold;
+
+
+    public MatchmakingAdminSnapshot(IntPtr o)
+    {
+      Candidates = new MatchmakingAdminSnapshotCandidateList(CAPI.ovr_MatchmakingAdminSnapshot_GetCandidates(o));
+      MyCurrentThreshold = CAPI.ovr_MatchmakingAdminSnapshot_GetMyCurrentThreshold(o);
+    }
+  }
+
+}

@@ -97,12 +97,6 @@ public static class AIManager {
             return (score, depthReached);
         }
 
-        if (move.FromRow == 6 && move.FromColumn == 2 && move.ToRow == 4 && move.ToColumn == 2) {
-            if (board.Turn == 11) {
-                Logger.Log("hola");
-            }
-        }
-
         if (!board.Move(move)) {
             throw new System.Exception($"Attempted to make invalid move {move} at depth {depthReached} with board state {board}.");
         }

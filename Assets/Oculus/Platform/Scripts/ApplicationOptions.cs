@@ -1,3 +1,33 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:8bfc899b6231243817c572754b6014481d6a40692a1409cf32cbc25668ac6cde
-size 785
+// This file was @generated with LibOVRPlatform/codegen/main. Do not modify it!
+
+namespace Oculus.Platform
+{
+  using System;
+  using System.Collections;
+  using Oculus.Platform.Models;
+  using System.Collections.Generic;
+  using UnityEngine;
+
+  public class ApplicationOptions {
+
+    public ApplicationOptions() {
+      Handle = CAPI.ovr_ApplicationOptions_Create();
+    }
+
+    public void SetDeeplinkMessage(string value) {
+      CAPI.ovr_ApplicationOptions_SetDeeplinkMessage(Handle, value);
+    }
+
+
+    // For passing to native C
+    public static explicit operator IntPtr(ApplicationOptions options) {
+      return options != null ? options.Handle : IntPtr.Zero;
+    }
+
+    ~ApplicationOptions() {
+      CAPI.ovr_ApplicationOptions_Destroy(Handle);
+    }
+
+    IntPtr Handle;
+  }
+}

@@ -1,3 +1,20 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:01cbeafe2b1fe7de1cd97f06e821c90964d3a5210d652869dc29ab01693ebcde
-size 480
+{
+    "name": "Oculus.VR",
+    "references": [],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "versionDefines": [
+        {
+            "name": "com.unity.xr.management",
+            "expression": "",
+            "define": "USING_XR_MANAGEMENT"
+        },
+        {
+            "name": "com.unity.xr.oculus",
+            "expression": "",
+            "define": "USING_XR_SDK_OCULUS"
+        }
+    ]
+}

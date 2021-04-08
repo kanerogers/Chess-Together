@@ -1,11 +1,15 @@
 ﻿using NUnit.Framework;
 
-namespace Tests {
+namespace UnitTests {
     [TestFixture]
     public class ChessBoardTest {
         [Test]
         public void TestPawn() {
             var board = new ChessBoard();
+
+            // Can move inside movement bounds
+            Assert.IsTrue(board.Move(6, 0, 5, 0));
+
             // Can't move outside movement bounds
             Assert.IsFalse(board.Move(1, 0, 4, 0));
             Assert.IsFalse(board.Move(1, 0, 0, 0));
@@ -21,6 +25,8 @@ namespace Tests {
                 Assert.AreEqual(pawn.Column, 0);
             }
 
+            board.Undo();
+
             // Pawn can move two steps forward
             Assert.IsTrue(board.Move(1, 1, 3, 1));
             Assert.IsNull(board.Pieces[1, 1]);
@@ -32,14 +38,23 @@ namespace Tests {
 
             }
 
+            // So can white
+            Assert.IsTrue(board.Move(6, 7, 4, 7));
+
             // ...but only on first move.
             Assert.IsFalse(board.Move(3, 1, 5, 1));
 
             // And when the intervening space is unoccupied.
             Assert.IsTrue(board.Move(0, 1, 2, 2));
+            Assert.IsTrue(board.Move(6, 2, 5, 2));
             Assert.IsFalse(board.Move(1, 2, 3, 2));
 
-            // White can move "forward"
+            // Black moves
+            Assert.IsTrue(board.Move(2, 2, 0, 1));
+
+            board = new ChessBoard();
+
+            // White moves into position.
             Assert.IsTrue(board.Move(6, 0, 5, 0));
             Assert.IsNull(board.Pieces[6, 0]);
             {
@@ -50,7 +65,11 @@ namespace Tests {
                 Assert.AreEqual(pawn.Column, 0);
             }
 
-            // White Pawn moves forward again
+            // Black Pawn moves into position
+            Assert.IsTrue(board.Move(1, 1, 3, 1));
+            Assert.IsNull(board.Pieces[1, 1]);
+
+            // White moves forward
             Assert.IsTrue(board.Move(5, 0, 4, 0));
 
             // Black Pawn takes White Pawn
@@ -65,22 +84,22 @@ namespace Tests {
 
             }
 
-            // White pawn at 6,1 moves forward
-            Assert.IsTrue(board.Move(6, 1, 5, 1));
-
-            // But cannot move backwards
-            Assert.IsFalse(board.Move(5, 1, 6, 1));
-
-            // Pawn can't make illegal moves
-            Assert.IsFalse(board.Move(6, 7, 4, 6));
-
             board = new ChessBoard();
 
-            // Pawns can only take pieces on diagonal
+            // White pawn at 6,1 moves forward
             Assert.IsTrue(board.Move(6, 1, 4, 1));
-            Assert.IsTrue(board.Move(4, 1, 3, 1));
-            Assert.IsTrue(board.Move(3, 1, 2, 1));
 
+            // Black pawn at 1,1 moves forward
+            Assert.IsTrue(board.Move(1, 1, 3, 1));
+
+            // But cannot move backwards
+            Assert.IsFalse(board.Move(4, 1, 5, 1));
+
+            // Pawn can't make illegal moves
+            Assert.IsFalse(board.Move(4, 1, 4, 6));
+
+            // Pawns can only take pieces on diagonal
+            Assert.IsFalse(board.Move(4, 1, 3, 1));
         }
 
         [Test]
@@ -97,14 +116,27 @@ namespace Tests {
 
             // White moves forward
             Assert.IsTrue(board.Move(6, 0, 4, 0, checkIfKingIsInCheck, checkStateAfterMove));
+
+            // This pawn could be captured.
+            Assert.NotNull(board.PawnThatCanBeCapturedWithEnpassant);
+            Assert.AreEqual(4, board.PawnThatCanBeCapturedWithEnpassant.Row);
+            Assert.AreEqual(0, board.PawnThatCanBeCapturedWithEnpassant.Column);
+
+            // Black moves a pawn
+            Assert.IsTrue(board.Move(1, 7, 2, 7, checkIfKingIsInCheck, checkStateAfterMove));
+            Assert.Null(board.PawnThatCanBeCapturedWithEnpassant);
+
+            // White moves forward
             Assert.IsTrue(board.Move(4, 0, 3, 0, checkIfKingIsInCheck, checkStateAfterMove));
+            Assert.Null(board.PawnThatCanBeCapturedWithEnpassant);
 
             // Black advances two squares
-            Logger.Log("!!!!!!!!TURN!!");
             Assert.IsTrue(board.Move(1, 1, 3, 1, checkIfKingIsInCheck, checkStateAfterMove));
+            Assert.NotNull(board.PawnThatCanBeCapturedWithEnpassant);
+            Assert.AreEqual(3, board.PawnThatCanBeCapturedWithEnpassant.Row);
+            Assert.AreEqual(1, board.PawnThatCanBeCapturedWithEnpassant.Column);
 
-            // En passant capture
-            Logger.Log($"board state: {board}");
+            // White makes En-Passant Capture
             Assert.IsTrue(board.Move(3, 0, 2, 1, checkIfKingIsInCheck, checkStateAfterMove));
 
             // Ensure it was captured
@@ -115,6 +147,11 @@ namespace Tests {
 
             // White moves forward
             Assert.IsTrue(board.Move(6, 0, 4, 0, checkIfKingIsInCheck, checkStateAfterMove));
+
+            // Black moves a pawn
+            Assert.IsTrue(board.Move(1, 7, 2, 7, checkIfKingIsInCheck, checkStateAfterMove));
+
+            // White moves forward
             Assert.IsTrue(board.Move(4, 0, 3, 0, checkIfKingIsInCheck, checkStateAfterMove));
 
             // Black advances two squares
@@ -123,16 +160,20 @@ namespace Tests {
             // White makes another move, invalidating en passant
             Assert.IsTrue(board.Move(6, 2, 5, 2, checkIfKingIsInCheck, checkStateAfterMove));
 
-            // And another.
+            // Black makes another turn
+            Assert.IsTrue(board.Move(2, 7, 3, 7, checkIfKingIsInCheck, checkStateAfterMove));
+
+            // White makes another.
             Assert.IsTrue(board.Move(5, 2, 4, 2, checkIfKingIsInCheck, checkStateAfterMove));
 
-            // ..and another
-            Assert.IsTrue(board.Move(6, 5, 5, 5, checkIfKingIsInCheck, checkStateAfterMove));
+            // Black makes another
+            Assert.IsTrue(board.Move(3, 7, 4, 7, checkIfKingIsInCheck, checkStateAfterMove));
 
             // En passant not possible.
             Assert.IsFalse(board.Move(3, 0, 2, 1, checkIfKingIsInCheck, checkStateAfterMove));
 
             // Ensure Undo works.
+            board.Undo();
             board.Undo();
             board.Undo();
             board.Undo();
@@ -149,11 +190,16 @@ namespace Tests {
         [Test]
         public void TestBishop() {
             var board = new ChessBoard();
+            NextMove(board);
+
             // Can't jump over a piece
             Assert.IsFalse(board.Move(0, 2, 2, 0));
 
             // Move a pawn so it can open
             Assert.IsTrue(board.Move(1, 3, 2, 3));
+
+            // Next turn
+            NextMove(board);
 
             // Move diagonal
             Assert.IsTrue(board.Move(0, 2, 3, 5));
@@ -165,6 +211,9 @@ namespace Tests {
                 Assert.AreEqual(bishop.Row, 3);
                 Assert.AreEqual(bishop.Column, 5);
             }
+
+            // Next turn
+            NextMove(board);
 
             // Test invalid moves
             Assert.IsFalse(board.Move(3, 5, 3, 4));
@@ -184,28 +233,43 @@ namespace Tests {
             }
         }
 
+        private void NextMove(ChessBoard board) {
+            var canMove = board.CanMove;
+            var move = board.ValidMoves[canMove][0];
+            Assert.IsTrue(board.Move(move));
+        }
+
         // FIDE 3.5 "[...] the rook [...] may not move over any intervening pieces."
         // FIDE 3.3 The rook may move to any square along the file or the rank on which it stands
         [Test]
         public void TestRook() {
             var board = new ChessBoard();
+            board.CanMove = ChessPiece.EColour.Black;
+
             // Can't jump pieces
             Assert.IsFalse(board.Move(0, 0, 2, 0));
 
             // Move a pawn so it can open
             Assert.IsTrue(board.Move(1, 0, 3, 0));
 
+            NextMove(board);
+
             // Move along rank or file
             Assert.IsTrue(board.Move(0, 0, 1, 0));
 
+            NextMove(board);
+
             // Move a pawn on the other side
             Assert.IsTrue(board.Move(1, 7, 2, 7));
+
+            NextMove(board);
 
             // Can't jump over that row
             Assert.IsFalse(board.Move(1, 0, 1, 7));
 
             // Move around
             Assert.IsTrue(board.Move(1, 0, 2, 0));
+            NextMove(board);
             Assert.IsTrue(board.Move(2, 0, 2, 6));
             {
                 var rook = board.Pieces[2, 6];
@@ -215,6 +279,7 @@ namespace Tests {
                 Assert.AreEqual(rook.Column, 6);
             }
 
+            NextMove(board);
 
             // But not diagonal
             Assert.IsFalse(board.Move(2, 6, 3, 7));
@@ -229,39 +294,39 @@ namespace Tests {
         [Test]
         public void TestQueen() {
             var board = new ChessBoard();
+
+            // Move a pawn so White Queen can open
+            Assert.IsTrue(board.Move(6, 3, 5, 3));
+
+            // Queen can't teleport.
             Assert.IsFalse(board.Move(0, 3, 3, 0));
 
-            // Move a pawn so it can open
+            // Move a pawn so black Queen can open
             Assert.IsTrue(board.Move(1, 3, 3, 3));
 
             // Move along rank or file
+            Assert.IsTrue(board.Move(7, 3, 6, 3));
             Assert.IsTrue(board.Move(0, 3, 1, 3));
 
-            // Move a pawn on the other side
-            Assert.IsTrue(board.Move(1, 7, 2, 7));
-
             // Can't jump over that row
-            Assert.IsFalse(board.Move(1, 3, 1, 7));
+            Assert.IsFalse(board.Move(6, 3, 4, 3));
 
             // Move around
+            Assert.IsTrue(board.Move(6, 3, 3, 0));
             Assert.IsTrue(board.Move(1, 3, 4, 0));
-            Assert.IsTrue(board.Move(4, 0, 4, 7));
             {
-                var queen = board.Pieces[4, 7];
+                var queen = board.Pieces[4, 0];
                 Assert.AreEqual(queen.Name, ChessPiece.EName.Queen);
                 Assert.AreEqual(queen.Colour, ChessPiece.EColour.Black);
                 Assert.AreEqual(queen.Row, 4);
-                Assert.AreEqual(queen.Column, 7);
+                Assert.AreEqual(queen.Column, 0);
             }
 
             // Can't teleport
-            Assert.IsFalse(board.Move(4, 7, 2, 6));
+            Assert.IsFalse(board.Move(3, 0, 2, 6));
 
-            // Move White Queen now
-
-            // Move a pawn so it can open
-            Assert.IsTrue(board.Move(6, 2, 5, 2));
-            Assert.IsTrue(board.Move(7, 3, 4, 0));
+            // Can't move like a Knight
+            Assert.IsFalse(board.Move(3, 0, 4, 2));
         }
 
         // FIDE 3.6 The knight may move to one of the squares nearest to that on which 
@@ -270,25 +335,41 @@ namespace Tests {
         public void TestKnight() {
             var board = new ChessBoard();
             // Can jump pieces
+            Assert.IsTrue(board.Move(7, 1, 5, 0));
             Assert.IsTrue(board.Move(0, 1, 2, 0));
 
             // Can make legal moves
+            Assert.IsTrue(board.Move(5, 0, 7, 1));
             Assert.IsTrue(board.Move(2, 0, 0, 1));
+            Assert.IsTrue(board.Move(7, 1, 5, 2));
             Assert.IsTrue(board.Move(0, 1, 2, 2));
+            Assert.IsTrue(board.Move(5, 2, 4, 4));
             Assert.IsTrue(board.Move(2, 2, 3, 4));
-            Assert.IsTrue(board.Move(3, 4, 5, 3));
+            Assert.IsTrue(board.Move(4, 4, 5, 2));
+            Assert.IsTrue(board.Move(3, 4, 4, 2));
+
             {
-                var knight = board.Pieces[5, 3];
+                var knight = board.Pieces[4, 2];
                 Assert.AreEqual(knight.Name, ChessPiece.EName.Knight);
                 Assert.AreEqual(knight.Colour, ChessPiece.EColour.Black);
+                Assert.AreEqual(knight.Row, 4);
+                Assert.AreEqual(knight.Column, 2);
+            }
+            {
+                var knight = board.Pieces[5, 2];
+                Assert.AreEqual(knight.Name, ChessPiece.EName.Knight);
+                Assert.AreEqual(knight.Colour, ChessPiece.EColour.White);
                 Assert.AreEqual(knight.Row, 5);
-                Assert.AreEqual(knight.Column, 3);
+                Assert.AreEqual(knight.Column, 2);
             }
 
+            // White moves
+            Assert.IsTrue(board.Move(6, 0, 5, 0));
+
             // Can't make illegal moves
-            Assert.IsFalse(board.Move(5, 3, 5, 7));
-            Assert.IsFalse(board.Move(5, 3, 2, 3));
-            Assert.IsFalse(board.Move(5, 3, 3, 5));
+            Assert.IsFalse(board.Move(4, 2, 5, 7));
+            Assert.IsFalse(board.Move(4, 2, 4, 1));
+            Assert.IsFalse(board.Move(4, 2, 4, 0));
         }
 
         // FIDE 3.8 a. There are two different ways of moving the king:
@@ -297,15 +378,34 @@ namespace Tests {
         [Test]
         public void TestKing() {
             var board = new ChessBoard();
-            // Open up a pawn to test
+            // White makes a move
+            NextMove(board);
+
+            // Black moves a pawn to open king.
             Assert.IsTrue(board.Move(1, 4, 2, 4));
 
-            // Can make legal moves
+            // White makes a move
+            board.Move(6, 7, 5, 7);
+
+            // Black King can make legal moves.
             Assert.IsTrue(board.Move(0, 4, 1, 4));
+
+            // White makes a move
+            board.Move(5, 7, 4, 7);
+
+            // Black King can make legal moves.
             Assert.IsTrue(board.Move(1, 4, 2, 3));
+
+            // White makes a move
+            board.Move(4, 7, 3, 7);
+
+            // Black King can make legal moves.
             Assert.IsTrue(board.Move(2, 3, 3, 3));
 
-            // Can't make illegal moves
+            // White makes a move
+            board.Move(3, 7, 2, 7);
+
+            // Black can't make illegal moves
             Assert.IsFalse(board.Move(3, 3, 3, 0));
 
             // Can't move into Check
@@ -466,29 +566,34 @@ namespace Tests {
 
                 // Move to checkmate
                 Assert.IsTrue(board.Move(6, 4, 5, 4));
+                Assert.IsTrue(board.Move(1, 0, 2, 0));
                 Assert.IsTrue(board.Move(7, 5, 4, 2));
+                Assert.IsTrue(board.Move(2, 0, 3, 0));
                 Assert.IsTrue(board.Move(7, 3, 5, 5));
+                Assert.IsTrue(board.Move(3, 0, 4, 0));
                 Assert.IsTrue(board.Move(5, 5, 1, 5));
-                Assert.AreEqual(board.State[ChessPiece.EColour.Black], ChessBoard.BoardStatus.Checkmate);
-                Assert.AreEqual(board.State[ChessPiece.EColour.White], ChessBoard.BoardStatus.NotInCheck);
+                Assert.AreEqual(ChessBoard.BoardStatus.Checkmate, board.State[ChessPiece.EColour.Black]);
+                Assert.AreEqual(ChessBoard.BoardStatus.NotInCheck, board.State[ChessPiece.EColour.White]);
             }
 
             {
                 var board = new ChessBoard();
 
                 // Give the King an opening
-                Assert.IsTrue(board.Move(1, 3, 2, 3));
                 Assert.IsTrue(board.Move(6, 4, 5, 4));
+                Assert.IsTrue(board.Move(1, 3, 2, 3));
                 Assert.IsTrue(board.Move(7, 5, 4, 2));
+                Assert.IsTrue(board.Move(1, 0, 2, 0));
                 Assert.IsTrue(board.Move(7, 3, 5, 5));
+                Assert.IsTrue(board.Move(2, 0, 3, 0));
                 Assert.IsTrue(board.Move(5, 5, 1, 5));
-                Assert.AreEqual(board.State[ChessPiece.EColour.Black], ChessBoard.BoardStatus.Check);
-                Assert.AreEqual(board.State[ChessPiece.EColour.White], ChessBoard.BoardStatus.NotInCheck);
+                Assert.AreEqual(ChessBoard.BoardStatus.Check, board.State[ChessPiece.EColour.Black]);
+                Assert.AreEqual(ChessBoard.BoardStatus.NotInCheck, board.State[ChessPiece.EColour.White]);
 
                 // Let the King move out of check
                 Assert.IsTrue(board.Move(0, 4, 1, 3));
-                Assert.AreEqual(board.State[ChessPiece.EColour.Black], ChessBoard.BoardStatus.NotInCheck);
-                Assert.AreEqual(board.State[ChessPiece.EColour.White], ChessBoard.BoardStatus.NotInCheck);
+                Assert.AreEqual(ChessBoard.BoardStatus.NotInCheck, board.State[ChessPiece.EColour.Black]);
+                Assert.AreEqual(ChessBoard.BoardStatus.NotInCheck, board.State[ChessPiece.EColour.White]);
             }
         }
 
@@ -505,18 +610,23 @@ namespace Tests {
             board.Pieces[2, 0] = whiteKing;
 
             // Kings cannot move next to eachother
-            Assert.IsFalse(board.Move(0, 0, 1, 0));
+            Assert.IsFalse(board.Move(2, 0, 1, 0));
         }
 
         [Test]
         public void TestCheckGuard() {
             var board = new ChessBoard();
 
-            // Move White King to position where she can threaten Black King
+            // Move white pawn to allow Queen to move
             Assert.IsTrue(board.Move(6, 4, 5, 4));
+
+            // Move a random black pawn
+            Assert.IsTrue(board.Move(1, 0, 2, 0));
+
+            // White Queen is now attacking Black King's square
             Assert.IsTrue(board.Move(7, 3, 3, 7));
 
-            // Cannot move self into check
+            // Black cannot move themselves into check
             Assert.IsFalse(board.Move(1, 5, 2, 5));
         }
 
@@ -535,6 +645,7 @@ namespace Tests {
         [Test]
         public void TestUndoSimple() {
             var board = new ChessBoard();
+            board.CanMove = ChessPiece.EColour.Black;
             Assert.IsTrue(board.Move(1, 1, 3, 1));
             board.Undo();
             Assert.IsTrue(board.Move(1, 1, 3, 1));
@@ -653,6 +764,9 @@ namespace Tests {
             Assert.IsTrue(whiteRook.Colour == ChessPiece.EColour.White);
             Assert.IsTrue(whiteRook.Name == ChessPiece.EName.Rook);
 
+            // Move the rook out of the way.
+            Assert.IsTrue(board.Move(7, 0, 6, 0));
+
             // Test Black King -> Kingside Rook
             var blackKingSideCastle = new Move(0, 4, 0, 6);
             Assert.IsTrue(board.Move(blackKingSideCastle));
@@ -704,40 +818,69 @@ namespace Tests {
             // "The right to castle has been lost.."
             // "(a) if the king has already moved"
             Assert.IsTrue(board.Move(0, 4, 1, 4));
-            Assert.IsTrue(board.Move(1, 4, 0, 4));
             Assert.IsFalse(board.Move(blackKingSideCastle));
             Assert.IsFalse(board.Move(blackQueenSideCastle));
+
+            // Move the other side..
+            board.Move(6, 0, 7, 0);
+
+            // Move our King back to where he was.
+            Assert.IsTrue(board.Move(1, 4, 0, 4));
+
+            // Move the other side..
+            board.Move(7, 0, 6, 0);
+
+            // Castling should not be legal.
+            Assert.IsFalse(board.Move(blackKingSideCastle));
+            Assert.IsFalse(board.Move(blackQueenSideCastle));
+
+            // Undo these test moves.
             board.Undo();
             board.Undo();
+            board.Undo();
+            board.Undo();
+
+            // King has now NOT moved. Castling should now be valid.
 
             // "(b) with a rook that has already moved"
             Assert.IsTrue(board.Move(0, 7, 1, 7));
+            board.Move(6, 0, 7, 0);
             Assert.IsTrue(board.Move(1, 7, 0, 7));
+            // Move the other side..
+            board.Move(7, 0, 6, 0);
+
+            // Castling should not be legal now as the king side rook has moved.
             Assert.IsFalse(board.Move(blackKingSideCastle));
 
-            // But we can still castle with the other rook.
+            // But we can still castle with the queen side rook as it has NOT moved
             Assert.IsTrue(board.Move(blackQueenSideCastle));
             board.Undo();
 
             // FIDE 3.8b(2)
             // "Castling is prevented temporarily:
             // (a) if the square on which the king stands..
-            board.CreatePiece(ChessPiece.EName.Rook, 1, 4, ChessPiece.EColour.White);
-            board.UpdateBoardStatus();
+
+            // Move the kingside rook just so that white can move.
+            Assert.IsTrue(board.Move(0, 7, 1, 7));
+
+            Assert.IsTrue(board.Move(6, 0, 6, 4));
             Assert.IsFalse(board.Move(blackQueenSideCastle));
+            board.Undo();
 
             // ..or the square which it must cross..
-            Assert.IsTrue(board.Move(1, 4, 1, 3));
+            board.Move(6, 0, 6, 3);
             Assert.IsFalse(board.Move(blackQueenSideCastle));
+            board.Undo();
 
             // ..or the square which it is to occupy..
-            Assert.IsTrue(board.Move(1, 3, 1, 2));
+            board.Move(6, 0, 6, 2);
             Assert.IsFalse(board.Move(blackQueenSideCastle));
+            board.Undo();
 
             // ..is attacked by one or more of the the opponent's pieces"
 
             // Let's just double check that castling is still possible with the enemy piece gone.
-            Assert.IsTrue(board.Move(1, 2, 1, 7));
+            board.Move(6, 0, 7, 0);
             Assert.IsTrue(board.Move(blackQueenSideCastle));
             board.Undo();
 
@@ -752,16 +895,21 @@ namespace Tests {
             var blackKingSideCastle = new Move(0, 4, 0, 6);
             // Okay, now let's try castling with all the pieces on the board.
             var board = new ChessBoard();
+            NextMove(board);
 
             // Move all the pieces out of the way
             // Move a pawn to make space for the bishop.
             Assert.IsTrue(board.Move(1, 6, 2, 6));
 
             // Move the knight
+            NextMove(board);
             Assert.IsTrue(board.Move(0, 6, 2, 5));
 
             // Move the bishop
+            NextMove(board);
             Assert.IsTrue(board.Move(0, 5, 2, 7));
+
+            NextMove(board);
 
             var boardStateBefore = board.ToString();
 
@@ -793,6 +941,7 @@ namespace Tests {
             var whiteKing = board.CreatePiece(ChessPiece.EName.King, 6, 2, ChessPiece.EColour.White);
             board.WhiteKing = (King)whiteKing;
             board.CreatePiece(ChessPiece.EName.Pawn, 7, 1, ChessPiece.EColour.White);
+            board.CanMove = ChessPiece.EColour.Black;
             board.UpdateBoardStatus();
 
             Assert.AreEqual(board.State[ChessPiece.EColour.Black], ChessBoard.BoardStatus.Stalemate);
@@ -808,6 +957,7 @@ namespace Tests {
 
             board.BlackKing = (King)board.Pieces[0, 4];
             board.WhiteKing = (King)board.Pieces[7, 4];
+            board.CanMove = ChessPiece.EColour.Black;
 
             var promotionMove = new Move(6, 0, 7, 0, ChessPiece.EName.Queen);
             board.Move(promotionMove);
@@ -823,6 +973,7 @@ namespace Tests {
             Assert.AreEqual(board.Turn, 0);
 
             // Now do it for white!
+            board.CanMove = ChessPiece.EColour.White;
             promotionMove.FromRow = 1;
             promotionMove.ToRow = 0;
 
@@ -845,12 +996,11 @@ namespace Tests {
             bool hasRookPromotion = false;
 
             // Make sure that promotions are registered as valid moves.
-            foreach (var move in board.ValidMoves[ChessPiece.EColour.Black]) {
-                Logger.Log("TEST", move.ToString());
-                if (move.PieceToPromoteTo == ChessPiece.EName.Rook && move.ToRow == 7 && move.ToColumn == 0) hasRookPromotion = true;
-                if (move.PieceToPromoteTo == ChessPiece.EName.Knight && move.ToRow == 7 && move.ToColumn == 0) hasKnightPromotion = true;
-                if (move.PieceToPromoteTo == ChessPiece.EName.Queen && move.ToRow == 7 && move.ToColumn == 0) hasQueenPromotion = true;
-                if (move.PieceToPromoteTo == ChessPiece.EName.Bishop && move.ToRow == 7 && move.ToColumn == 0) hasBishopPromotion = true;
+            foreach (var move in board.ValidMoves[ChessPiece.EColour.White]) {
+                if (move.PieceToPromoteTo == ChessPiece.EName.Rook && move.ToRow == 0 && move.ToColumn == 0) hasRookPromotion = true;
+                if (move.PieceToPromoteTo == ChessPiece.EName.Knight && move.ToRow == 0 && move.ToColumn == 0) hasKnightPromotion = true;
+                if (move.PieceToPromoteTo == ChessPiece.EName.Queen && move.ToRow == 0 && move.ToColumn == 0) hasQueenPromotion = true;
+                if (move.PieceToPromoteTo == ChessPiece.EName.Bishop && move.ToRow == 0 && move.ToColumn == 0) hasBishopPromotion = true;
             }
 
             Assert.IsTrue(hasBishopPromotion);
@@ -858,17 +1008,19 @@ namespace Tests {
             Assert.IsTrue(hasKnightPromotion);
             Assert.IsTrue(hasRookPromotion);
 
+            board.CanMove = ChessPiece.EColour.Black;
+            board.UpdateBoardStatus();
+
             hasBishopPromotion = false;
             hasQueenPromotion = false;
             hasKnightPromotion = false;
             hasRookPromotion = false;
 
-            foreach (var move in board.ValidMoves[ChessPiece.EColour.White]) {
-                Logger.Log("TEST", move.ToString());
-                if (move.PieceToPromoteTo == ChessPiece.EName.Rook && move.ToRow == 0 && move.ToColumn == 0) hasRookPromotion = true;
-                if (move.PieceToPromoteTo == ChessPiece.EName.Knight && move.ToRow == 0 && move.ToColumn == 0) hasKnightPromotion = true;
-                if (move.PieceToPromoteTo == ChessPiece.EName.Queen && move.ToRow == 0 && move.ToColumn == 0) hasQueenPromotion = true;
-                if (move.PieceToPromoteTo == ChessPiece.EName.Bishop && move.ToRow == 0 && move.ToColumn == 0) hasBishopPromotion = true;
+            foreach (var move in board.ValidMoves[ChessPiece.EColour.Black]) {
+                if (move.PieceToPromoteTo == ChessPiece.EName.Rook && move.ToRow == 7 && move.ToColumn == 0) hasRookPromotion = true;
+                if (move.PieceToPromoteTo == ChessPiece.EName.Knight && move.ToRow == 7 && move.ToColumn == 0) hasKnightPromotion = true;
+                if (move.PieceToPromoteTo == ChessPiece.EName.Queen && move.ToRow == 7 && move.ToColumn == 0) hasQueenPromotion = true;
+                if (move.PieceToPromoteTo == ChessPiece.EName.Bishop && move.ToRow == 7 && move.ToColumn == 0) hasBishopPromotion = true;
             }
 
             Assert.IsTrue(hasBishopPromotion);

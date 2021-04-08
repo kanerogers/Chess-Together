@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using System.Collections;
 
-namespace Tests {
+namespace IntegrationTests {
     public class SceneBoardTests {
         bool poolCreated = false;
         GameObject poolManager;
