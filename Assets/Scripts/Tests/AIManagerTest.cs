@@ -1,19 +1,18 @@
 ﻿using UnityEngine;
 using NUnit.Framework;
 
-namespace Tests {
+namespace UnitTests {
     [TestFixture]
     public class AIManagerTest {
         [Test]
         public void BasicAITest() {
             var board = new ChessBoard();
             var turn = 0;
-            var canMove = ChessPiece.EColour.White;
             var moveType = AIManager.MoveType.Standard;
             var turns = 400;
 
-            while (turn < turns) {
-                var currentPlayer = canMove;
+            while (turns != 400) {
+                var currentPlayer = board.CanMove;
                 {
                     var state = board.State[currentPlayer];
                     if (state == ChessBoard.BoardStatus.Checkmate) {
@@ -59,7 +58,6 @@ namespace Tests {
                 }
 
                 turn++;
-                canMove = canMove.Inverse();
             }
 
 
@@ -67,6 +65,7 @@ namespace Tests {
             PrintPGN(board);
         }
         void PrintPGN(ChessBoard board) {
+            var moves = board.UndoStack.ToArray();
             var pgn = PGNExporter.ToPGN(board);
             Debug.Log(pgn);
         }

@@ -1,3 +1,26 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:a0c29448d2770381845057d489bed592e560e5cf21365897bee53a6a8404d6f5
-size 647
+using System;
+using System.IO;
+
+public static class PathHelper
+{
+	public static string MakeRelativePath(string fromPath, string toPath)
+	{
+		var fromUri = new Uri(Path.GetFullPath(fromPath));
+		var toUri = new Uri(Path.GetFullPath(toPath));
+
+		if (fromUri.Scheme != toUri.Scheme)
+		{
+			return toPath;
+		}
+
+		var relativeUri = fromUri.MakeRelativeUri(toUri);
+		var relativePath = Uri.UnescapeDataString(relativeUri.ToString());
+
+		if (toUri.Scheme.Equals("file", StringComparison.InvariantCultureIgnoreCase))
+		{
+			relativePath = relativePath.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+		}
+
+		return relativePath;
+	}
+}

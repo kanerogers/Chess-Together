@@ -1,3 +1,24 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:954d352f9180a6e55ad92d2461b21acccf69046bc94a299cddb4fdeeb711f587
-size 570
+// This file was @generated with LibOVRPlatform/codegen/main. Do not modify it!
+
+namespace Oculus.Platform.Models
+{
+  using System;
+  using System.Collections;
+  using Oculus.Platform.Models;
+  using System.Collections.Generic;
+  using UnityEngine;
+
+  public class LaunchUnblockFlowResult
+  {
+    public readonly bool DidCancel;
+    public readonly bool DidUnblock;
+
+
+    public LaunchUnblockFlowResult(IntPtr o)
+    {
+      DidCancel = CAPI.ovr_LaunchUnblockFlowResult_GetDidCancel(o);
+      DidUnblock = CAPI.ovr_LaunchUnblockFlowResult_GetDidUnblock(o);
+    }
+  }
+
+}
