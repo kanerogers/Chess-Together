@@ -16,7 +16,7 @@ namespace IntegrationTests {
 
             // Create Game Manager
             GameManager gameManager = MonoBehaviour.Instantiate(Resources.Load<GameObject>("Prefabs/Game Manager")).GetComponent<GameManager>();
-            gameManager.opponentType = GameManager.OpponentType.AI;
+            gameManager.opponentType = GameManager.OpponentType.None;
 
             // Wire up all the hideous dependencies
             GameObject chessBoardGameObject = MonoBehaviour.Instantiate(Resources.Load<GameObject>("Prefabs/Chess Board"));

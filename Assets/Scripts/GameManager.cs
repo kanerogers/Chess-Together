@@ -381,7 +381,8 @@ public class GameManager : MonoBehaviour {
 
     public enum OpponentType {
         Human,
-        AI
+        AI,
+        None
     }
 
 }
