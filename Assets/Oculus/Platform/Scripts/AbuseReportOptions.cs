@@ -1,3 +1,37 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:e81776a46f8db89609b2418f5fd926a33638990eab038e9f8a8869bddb21f55b
-size 919
+// This file was @generated with LibOVRPlatform/codegen/main. Do not modify it!
+
+namespace Oculus.Platform
+{
+  using System;
+  using System.Collections;
+  using Oculus.Platform.Models;
+  using System.Collections.Generic;
+  using UnityEngine;
+
+  public class AbuseReportOptions {
+
+    public AbuseReportOptions() {
+      Handle = CAPI.ovr_AbuseReportOptions_Create();
+    }
+
+    public void SetPreventPeopleChooser(bool value) {
+      CAPI.ovr_AbuseReportOptions_SetPreventPeopleChooser(Handle, value);
+    }
+
+    public void SetReportType(AbuseReportType value) {
+      CAPI.ovr_AbuseReportOptions_SetReportType(Handle, value);
+    }
+
+
+    // For passing to native C
+    public static explicit operator IntPtr(AbuseReportOptions options) {
+      return options != null ? options.Handle : IntPtr.Zero;
+    }
+
+    ~AbuseReportOptions() {
+      CAPI.ovr_AbuseReportOptions_Destroy(Handle);
+    }
+
+    IntPtr Handle;
+  }
+}

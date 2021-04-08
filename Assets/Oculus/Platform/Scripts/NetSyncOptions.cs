@@ -1,3 +1,41 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:b7718020fca077cd39412725d58c1c6eb1f4ab6c41d44c9b5a06d22549bde402
-size 992
+// This file was @generated with LibOVRPlatform/codegen/main. Do not modify it!
+
+namespace Oculus.Platform
+{
+  using System;
+  using System.Collections;
+  using Oculus.Platform.Models;
+  using System.Collections.Generic;
+  using UnityEngine;
+
+  public class NetSyncOptions {
+
+    public NetSyncOptions() {
+      Handle = CAPI.ovr_NetSyncOptions_Create();
+    }
+
+    public void SetVoipGroup(string value) {
+      CAPI.ovr_NetSyncOptions_SetVoipGroup(Handle, value);
+    }
+
+    public void SetVoipStreamDefault(NetSyncVoipStreamMode value) {
+      CAPI.ovr_NetSyncOptions_SetVoipStreamDefault(Handle, value);
+    }
+
+    public void SetZoneId(string value) {
+      CAPI.ovr_NetSyncOptions_SetZoneId(Handle, value);
+    }
+
+
+    // For passing to native C
+    public static explicit operator IntPtr(NetSyncOptions options) {
+      return options != null ? options.Handle : IntPtr.Zero;
+    }
+
+    ~NetSyncOptions() {
+      CAPI.ovr_NetSyncOptions_Destroy(Handle);
+    }
+
+    IntPtr Handle;
+  }
+}

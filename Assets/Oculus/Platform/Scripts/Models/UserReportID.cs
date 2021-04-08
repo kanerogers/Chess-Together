@@ -1,3 +1,24 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:02b1c556086a806ea286e8c2e695d9d7b9e85589abaead5dbaadbe61d5971623
-size 504
+// This file was @generated with LibOVRPlatform/codegen/main. Do not modify it!
+
+namespace Oculus.Platform.Models
+{
+  using System;
+  using System.Collections;
+  using Oculus.Platform.Models;
+  using System.Collections.Generic;
+  using UnityEngine;
+
+  public class UserReportID
+  {
+    public readonly bool DidCancel;
+    public readonly UInt64 ID;
+
+
+    public UserReportID(IntPtr o)
+    {
+      DidCancel = CAPI.ovr_UserReportID_GetDidCancel(o);
+      ID = CAPI.ovr_UserReportID_GetID(o);
+    }
+  }
+
+}

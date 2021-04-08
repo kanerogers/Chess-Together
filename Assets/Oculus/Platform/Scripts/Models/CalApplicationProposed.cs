@@ -1,3 +1,22 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:44bc427020899f2bcd6accb87f0e27dc62d5c303c9d650716293542dc3a1dc38
-size 441
+// This file was @generated with LibOVRPlatform/codegen/main. Do not modify it!
+
+namespace Oculus.Platform.Models
+{
+  using System;
+  using System.Collections;
+  using Oculus.Platform.Models;
+  using System.Collections.Generic;
+  using UnityEngine;
+
+  public class CalApplicationProposed
+  {
+    public readonly UInt64 ID;
+
+
+    public CalApplicationProposed(IntPtr o)
+    {
+      ID = CAPI.ovr_CalApplicationProposed_GetID(o);
+    }
+  }
+
+}
