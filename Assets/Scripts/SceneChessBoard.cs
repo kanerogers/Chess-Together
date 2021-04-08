@@ -81,9 +81,11 @@ public class SceneChessBoard : MonoBehaviour {
             }
         }
 
+        var move = new Move(fromRow, fromColumn, toRow, toColumn);
+
         // Will take care of all business logic.
-        if (!LogicBoard.Move(fromRow, fromColumn, toRow, toColumn)) return false;
-        if (IsCastling()) {
+        if (!LogicBoard.Move(move)) return false;
+        if (move.IsCastling) {
             MoveCastle(scenePiece, toRow, toColumn);
             return true;
         }
@@ -150,22 +152,21 @@ public class SceneChessBoard : MonoBehaviour {
         var (fromRow, fromColumn) = (king.Piece.Row, king.Piece.Column);
         EventManager.DeselectedPiece(fromRow, fromColumn);
 
-        var rook = Pieces[toRow, toColumn].GetComponent<SceneChessPiece>();
+        var rookFromColumn = toColumn == 6 ? 7 : 0;
+        var rookToColumn = toColumn == 6 ? 5 : 3;
+        var rook = Pieces[toRow, rookFromColumn].GetComponent<SceneChessPiece>();
 
         // Update our internal bookkeeping
         Pieces[fromRow, fromColumn] = null;
-        Pieces[toRow, toColumn] = null;
 
-        var kingColumn = toColumn == 7 ? 6 : 2;
-        var rookColumn = toColumn == 7 ? 5 : 3;
-        Pieces[fromRow, kingColumn] = king.gameObject;
-        Pieces[fromRow, rookColumn] = rook.gameObject;
+        Pieces[fromRow, toColumn] = king.gameObject;
+        Pieces[fromRow, rookToColumn] = rook.gameObject;
 
         // Move the piece in the Scene
-        var kingPosition = CoordinatesForPosition(toRow, kingColumn);
+        var kingPosition = CoordinatesForPosition(toRow, toColumn);
         king.Move(kingPosition);
 
-        var rookPosition = CoordinatesForPosition(toRow, rookColumn);
+        var rookPosition = CoordinatesForPosition(toRow, rookToColumn);
         rook.Move(rookPosition);
     }
 
@@ -272,8 +273,6 @@ public class SceneChessBoard : MonoBehaviour {
             obj.transform.localScale *= scale;
         }
     }
-
-    private bool IsCastling() => LogicBoard.UndoStack.Peek().Item1.IsCastling;
 
     IEnumerator RemovePiece(GameObject obj, float movementDuration) {
         Debug.Log($"Removing {obj.GetComponent<SceneChessPiece>().Piece}");
