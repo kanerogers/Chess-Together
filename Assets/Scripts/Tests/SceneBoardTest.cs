@@ -196,13 +196,37 @@ namespace IntegrationTests {
         [UnityTest]
         public IEnumerator TestMovement() {
             var board = GetBoard();
-            var piece = board.Pieces[6, 0].GetComponent<SceneChessPiece>();
-            Assert.IsTrue(board.Move(piece, 5, 0));
+            var piece = board.Pieces[6, 6].GetComponent<SceneChessPiece>();
+            Assert.IsTrue(board.Move(piece, 4, 6));
 
-            piece = board.Pieces[5, 0].GetComponent<SceneChessPiece>();
+            piece = board.Pieces[4, 6].GetComponent<SceneChessPiece>();
             yield return new WaitForSeconds(board.MovementDuration + 0.1f);
-            var expectedPosition = board.CoordinatesForPosition(5, 0);
+            var expectedPosition = board.CoordinatesForPosition(4, 6);
             Assert.AreEqual(expectedPosition, piece.transform.localPosition);
+        }
+
+        [UnityTest]
+        public IEnumerator TestCastling() {
+
+            var board = GetBoard();
+            var moves = new Move[] {
+                new Move(6, 6, 4, 6),
+                new Move(1, 6, 3, 6),
+                new Move(7, 6, 5, 7),
+                new Move(0, 6, 2, 7),
+                new Move(7, 5, 6, 6),
+                new Move(0, 5, 1, 6),
+                new Move(7, 4, 7, 6),
+            };
+
+            foreach (var move in moves) {
+                board.Move(move);
+                var (_, _, toRow, toColumn) = move.ToCoordinates();
+                yield return new WaitForSeconds(board.MovementDuration + 0.1f);
+                var piece = board.Pieces[toRow, toColumn];
+                var expectedPosition = board.CoordinatesForPosition(toRow, toColumn);
+                Assert.AreEqual(expectedPosition, piece.transform.localPosition);
+            }
         }
 
         [UnityTest]
