@@ -13,32 +13,23 @@ public class ChessBoard {
     public Dictionary<ChessPiece.EColour, BoardStatus> State = new Dictionary<ChessPiece.EColour, BoardStatus>();
     public Pawn PawnThatCanBeCapturedWithEnpassant = null;
     static StringBuilder sb = new StringBuilder();
+    public ChessPiece.EColour CanMove;
 
     #region Public
-    public ChessBoard() {
+
+    public ChessBoard(bool emptyBoard = false) {
         Turn = 0;
         Inst = this;
+        CanMove = ChessPiece.EColour.White;
         ValidMoves[ChessPiece.EColour.Black] = new List<Move>();
         ValidMoves[ChessPiece.EColour.White] = new List<Move>();
-
-        SetUpBoard();
 
         State[ChessPiece.EColour.Black] = BoardStatus.NotInCheck;
         State[ChessPiece.EColour.White] = BoardStatus.NotInCheck;
-        UpdateBoardStatus();
-    }
-
-    public ChessBoard(bool emptyBoard) {
-        Turn = 0;
-        Inst = this;
-        ValidMoves[ChessPiece.EColour.Black] = new List<Move>();
-        ValidMoves[ChessPiece.EColour.White] = new List<Move>();
 
         if (emptyBoard) return;
-        SetUpBoard();
 
-        State[ChessPiece.EColour.Black] = BoardStatus.NotInCheck;
-        State[ChessPiece.EColour.White] = BoardStatus.NotInCheck;
+        SetUpBoard();
         UpdateBoardStatus();
     }
 
@@ -53,16 +44,9 @@ public class ChessBoard {
 
         // Move is valid! Update state.
         UpdateState(move);
-        var ep = PawnThatCanBeCapturedWithEnpassant;
-        if (move.FromRow == 6 && move.ToRow == 4 && move.FromColumn == 4 && move.ToColumn == 4 && checkStateAfterMove) {
-            Logger.Log("hey");
-        }
 
         // Check the status of the board.
         if (checkStateAfterMove) UpdateBoardStatus();
-        if (ep != null && PawnThatCanBeCapturedWithEnpassant == null) {
-            throw new Exception("INVARIANT VIOLATION - PawnThatCanBeCapturedWithEnPassant was wiped!");
-        }
 
         // Done!
         return true;
@@ -75,6 +59,11 @@ public class ChessBoard {
         // Does the piece exist?
         if (piece == null) {
             // Logger.Log("MOVES", $"Piece at {fromRow},{fromColumn} does not exist.");
+            return false;
+        }
+
+        // Is it this piece's turn to move?
+        if (piece.Colour != CanMove) {
             return false;
         }
 
@@ -101,7 +90,7 @@ public class ChessBoard {
         if (move.IsEnPassantCapture) {
             var enPassantRow = ((Pawn)piece).GetEnPassantRow(toRow);
             if (enPassantRow > 8 || enPassantRow < 0) {
-                throw new Exception($"Invalid enPassantRow {enPassantRow}. Piece is {piece} ???");
+                throw new ChessException($"Invalid enPassantRow {enPassantRow}. Piece is {piece} ???");
             }
             removedPiece = Pieces[enPassantRow, toColumn];
             // Logger.Log("EP", $"Removed piece is {removedPiece}");
@@ -114,6 +103,11 @@ public class ChessBoard {
         UpdateTurn(move);
         UpdateEnPassantState(move);
 
+        if (PawnThatCanBeCapturedWithEnpassant?.Row == 1) {
+            throw new ChessException($"Impossible {PawnThatCanBeCapturedWithEnpassant} - invalidated pawn cannot be on row 1 and CanBeCapturedByEnpassant");
+        }
+
+
         // Logger.Log($"..done!");
     }
 
@@ -121,11 +115,20 @@ public class ChessBoard {
         var (lastMove, removedPiece) = UndoStack.Pop();
         var (invalidatedPawn, updatedPawn) = lastMove.PreviousEnPassantState;
 
+        if (invalidatedPawn?.Row == 1) {
+            // throw new ChessException($"Impossible {invalidatedPawn} - invalidated pawn cannot be on row 1 and CanBeCapturedByEnpassant");
+        }
+
+        if (updatedPawn?.Row == 1) {
+            // throw new ChessException($"Impossible {updatedPawn} - invalidated pawn cannot be on row 1 and CanBeCapturedByEnpassant");
+        }
+
         UndoPiecesState(lastMove, removedPiece);
         UndoTurn(lastMove);
         UndoEnPassantState(lastMove);
 
         if (shouldUpdateBoardStatus) UpdateBoardStatus();
+
     }
 
     public bool IsValidMove(ChessPiece piece, int toRow, int toColumn) {
@@ -175,32 +178,27 @@ public class ChessBoard {
         return piece;
     }
 
-    // Possibly overloaded function that: 
-    // - Evaluates all valid moves for the player
-    // - Sets the checkmate flags for each colour
+    // Checks through the enemy's pieces and does a couple things:
+    // - Lists all their valid moves
+    // - Determines whether they're in check/checkmate/etc.
     public void UpdateBoardStatus() {
-        // Logger.Log("BOARD STATE", "Updating board state.");
         // Take a deep breath..
+
+        // Reset the states.
         State[ChessPiece.EColour.Black] = BoardStatus.NotInCheck;
         State[ChessPiece.EColour.White] = BoardStatus.NotInCheck;
 
+        var king = CanMove.IsBlack() ? BlackKing : WhiteKing;
+
         // If a King is in Check, assume it's Checkmate UNLESS we can prove otherwise.
-
-        if (BlackKing.IsInCheck(Pieces)) {
-            State[ChessPiece.EColour.Black] = BoardStatus.Checkmate;
-        }
-
-        if (WhiteKing.IsInCheck(Pieces)) {
-            State[ChessPiece.EColour.White] = BoardStatus.Checkmate;
+        if (king.IsInCheck(Pieces)) {
+            State[CanMove] = BoardStatus.Checkmate;
         }
 
         // Clear all our valid moves.
         ValidMoves[ChessPiece.EColour.Black].Clear();
         ValidMoves[ChessPiece.EColour.White].Clear();
         var hasEp = PawnThatCanBeCapturedWithEnpassant != null;
-        if (hasEp) {
-            Logger.Log("debug");
-        }
 
         // Iterate through all pieces on the board and check their valid moves.
         for (int fromRow = 0; fromRow < 8; fromRow++) {
@@ -209,30 +207,18 @@ public class ChessBoard {
                 if (piece == null) continue;
                 var colour = piece.Colour;
 
-                if (piece.Row != fromRow) throw new Exception($"INVALID STATE: {piece} should have its row set to {fromRow}!!");
-                if (piece.Column != fromColumn) throw new Exception($"INVALID STATE: {piece} should have its column set to {fromColumn}!!");
+                if (piece.Row != fromRow) throw new ChessException($"INVALID STATE: {piece} should have its row set to {fromRow}!!");
+                if (piece.Column != fromColumn) throw new ChessException($"INVALID STATE: {piece} should have its column set to {fromColumn}!!");
+
+                if (colour != CanMove) continue;
 
                 for (int toRow = 0; toRow < 8; toRow++) {
                     for (int toColumn = 0; toColumn < 8; toColumn++) {
-                        if (hasEp && PawnThatCanBeCapturedWithEnpassant == null) {
-                            throw new Exception("Invalid state! PawnThatCanBeCapturedWithEnPassant has been cleared!");
-                        }
-
-                        // var before = ToString();
                         var move = new Move(fromRow, fromColumn, toRow, toColumn);
                         var pieceAtDestination = Pieces[toRow, toColumn];
 
                         // If this move is invalid, continue.
-                        if (hasEp && fromRow == 4 && fromColumn == 4 && toRow == 3 && toColumn == 4) {
-                            Logger.Log("debug");
-                        }
-
                         if (!Move(move, checkIfKingIsInCheck: true, checkStateAfterMove: false)) continue;
-
-
-                        if (fromRow == toRow && fromColumn == toColumn) {
-                            throw new Exception($"Move {move} is invalid! It's the same square!");
-                        }
 
                         // WARNING: Move has been made, must call Undo before continue!
 
@@ -249,9 +235,6 @@ public class ChessBoard {
                             // FIDE 3.7e - ..
                             // exchanged as part of the same move on the same square for a new queen, rook,
                             // bishop or knight of the same colour.
-                            // if (fromColumn != toColumn) {
-                            //     Logger.Log("IS_PROMOTION", "Adding suspect promotion that would capture", pieceAtDestination);
-                            // }
                             move = new Move(fromRow, fromColumn, toRow, toColumn, ChessPiece.EName.Bishop);
                             ValidMoves[colour].Add(move);
                             move = new Move(fromRow, fromColumn, toRow, toColumn, ChessPiece.EName.Rook);
@@ -266,45 +249,25 @@ public class ChessBoard {
 
                         // If the King is not in check, there is no need to evaluate if this is checkmate.
                         if (State[colour] == BoardStatus.NotInCheck) {
-                            if (hasEp && fromRow == 1 && fromColumn == 4 && toRow == 2 && toColumn == 4) {
-                                Logger.Log("holaaaaaaaaaaaaaaaaaaaaaaaa");
-                            }
                             Undo(false);
-                            if (hasEp && PawnThatCanBeCapturedWithEnpassant == null) {
-                                throw new Exception("derp");
-                            }
-                            // var after = ToString();
-                            // if (before != after) {
-                            //     throw new Exception($"{before} is not equal to  {after}!");
-                            // }
                             continue;
                         }
 
-                        var king = colour == ChessPiece.EColour.Black ? BlackKing : WhiteKing;
-
-                        // If this move would put the King out of check, then we know that they're 
+                        // If this move would put the King out of check, then we know we're not in checkmate.
                         // not in Checkmate.
                         if (!king.IsInCheck(Pieces)) {
                             State[colour] = BoardStatus.Check;
                         }
-                        Undo(false);
 
-                        // {
-                        //     var after = ToString();
-                        //     if (before != after) {
-                        //         throw new Exception($"{before} is not equal to  {after}!");
-                        //     }
-                        // }
+                        Undo(false);
                     }
                 }
             }
         }
 
         // If we're not in checkmate and there are no valid moves left, this is a stalemate.
-        foreach (ChessPiece.EColour colour in Enum.GetValues(typeof(ChessPiece.EColour))) {
-            if (State[colour] == BoardStatus.Checkmate) return;
-            if (ValidMoves[colour].Count == 0) State[colour] = BoardStatus.Stalemate;
-        }
+        if (State[CanMove] == BoardStatus.Checkmate) return;
+        if (ValidMoves[CanMove].Count == 0) State[CanMove] = BoardStatus.Stalemate;
     }
     #endregion
 
@@ -349,7 +312,7 @@ public class ChessBoard {
         var (fromRow, fromColumn, toRow, toColumn) = lastMove.ToCoordinates();
         var movedPiece = Pieces[toRow, toColumn];
         if (movedPiece == null) {
-            throw new Exception($"Unable to undo move {lastMove} - movedPiece is null!");
+            throw new ChessException($"Unable to undo move {lastMove} - movedPiece is null!");
         }
 
         // If this was a castle, undo that too.
@@ -380,15 +343,18 @@ public class ChessBoard {
 
     private void UpdateTurn(Move move) {
         Turn++;
+        CanMove = CanMove.Inverse();
         // Logger.Log($"Turn updated - {Turn}");
     }
 
     private void UndoTurn(Move lastMove) {
         Turn--;
+        CanMove = CanMove.Inverse();
     }
 
     private void UpdateEnPassantState(Move move) {
         var (_, _, toRow, toColumn) = move.ToCoordinates(); // note: use toRow, toColumn as pawn has already moved
+        var piece = Pieces[toRow, toColumn];
         Pawn invalidatedPawn = null;
         Pawn updatedPawn = null;
 
@@ -396,10 +362,11 @@ public class ChessBoard {
         invalidatedPawn = null;
         var epPawn = PawnThatCanBeCapturedWithEnpassant;
 
+
         // IMPORTANT! If our last move was the one that set our EnPassantState to begin with (eg. a double square pawn move)
         // we MUST check to make sure that we're not invalidating the move that was just made
         // TODO: shouldn't we do this BEFORE we update the rest of the state?
-        if (epPawn != null && (epPawn.Row != toRow || epPawn.Column != toColumn)) {
+        if (epPawn != null && piece != epPawn) {
             invalidatedPawn = epPawn;
             // Logger.Log("UPDATE EP", $"{invalidatedPawn} now cannot be captured");
             invalidatedPawn.CanBeCapturedByEnpassant = false;
@@ -407,12 +374,11 @@ public class ChessBoard {
             // Logger.Log("UPDATE EP", $"PawnThatCanBeCapturedWithEnpassant is now null");
         }
 
-        var piece = Pieces[toRow, toColumn];
         if (piece.Name == ChessPiece.EName.Pawn) {
             var pawn = (Pawn)piece;
             if (pawn.CanBeCapturedByEnpassant) {
                 if (pawn.Row == 1) {
-                    throw new Exception($"Impossible {pawn} - a pawn cannot be on row 1 and CanBeCapturedByEnpassant");
+                    throw new ChessException("holaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
                 }
                 updatedPawn = pawn;
                 PawnThatCanBeCapturedWithEnpassant = pawn;
@@ -421,7 +387,7 @@ public class ChessBoard {
         }
 
         if (invalidatedPawn?.Row == 1) {
-            throw new Exception($"Impossible {invalidatedPawn} - invalidated pawn cannot be on row 1 and CanBeCapturedByEnpassant");
+            // throw new ChessException($"Impossible {invalidatedPawn} - invalidated pawn cannot be on row 1 and CanBeCapturedByEnpassant");
         }
 
         move.PreviousEnPassantState = (invalidatedPawn, updatedPawn);
@@ -441,7 +407,7 @@ public class ChessBoard {
             invalidatedPawn.CanBeCapturedByEnpassant = true;
             // Logger.Log("UNDO EP", $"PawnThatCanBeCapturedWithEnpassant is now {invalidatedPawn}");
             if (PawnThatCanBeCapturedWithEnpassant?.Row == 1) {
-                throw new Exception($"Impossible {invalidatedPawn} - invalidated pawn cannot be on row 1 and CanBeCapturedByEnpassant");
+                // throw new ChessException($"Impossible {invalidatedPawn} - invalidated pawn cannot be on row 1 and CanBeCapturedByEnpassant");
             }
         }
 
@@ -486,10 +452,8 @@ public class ChessBoard {
         // Logger.Log("BOARD STATE", $"Evlauting if {move} would put King in check.");
         var (fromRow, fromColumn, _, _) = move.ToCoordinates();
         var piece = Pieces[fromRow, fromColumn];
-        if (piece == null) throw new Exception($"Error evaluating {move} - piece is null!");
+        if (piece == null) throw new ChessException($"Error evaluating {move} - piece is null!");
         var king = piece.Colour == ChessPiece.EColour.Black ? BlackKing : WhiteKing;
-
-        // var before = ToString();
 
         if (!Move(move, false, false)) {
             throw new System.Exception($"Attempted to make invalid move: {move}");
@@ -497,10 +461,6 @@ public class ChessBoard {
 
         var isInCheck = (king.IsInCheck(Pieces));
         Undo(false);
-        // var after = ToString();
-        // if (before != after) {
-        //     throw new Exception($"{before} is not equal to {after}!");
-        // }
 
         return isInCheck;
     }
@@ -508,7 +468,7 @@ public class ChessBoard {
     private void PromotePiece(Move move) {
         var (fromRow, fromColumn, toRow, toColumn) = move.ToCoordinates();
         var pawn = Pieces[fromRow, fromColumn];
-        if (pawn == null) throw new Exception($"Invalid promotion - no pawn found at {fromRow},{fromColumn}. Board state: {this}");
+        if (pawn == null) throw new ChessException($"Invalid promotion - no pawn found at {fromRow},{fromColumn}. Board state: {this}");
 
         // Kill the pawn.
         Pieces[fromRow, fromColumn] = null;

@@ -125,7 +125,7 @@ public class SceneChessBoard : MonoBehaviour {
         if (!obj) {
             var pgn = PGNExporter.ToPGN(LogicBoard);
             Debug.LogError(pgn);
-            throw new Exception($"No piece found at {move.FromRow},{move.FromColumn}");
+            throw new ChessException($"No piece found at {move.FromRow},{move.FromColumn}");
         }
 
         var scenePiece = obj.GetComponent<SceneChessPiece>();
@@ -224,7 +224,7 @@ public class SceneChessBoard : MonoBehaviour {
             var t = PoolManager.Pools[POOL_NAME].Spawn(queenPrefab.transform);
             obj = t.gameObject;
         } else {
-            throw new Exception("invalid piece name");
+            throw new ChessException("invalid piece name");
         }
 
         SceneChessPiece sp = obj.GetComponent<SceneChessPiece>();

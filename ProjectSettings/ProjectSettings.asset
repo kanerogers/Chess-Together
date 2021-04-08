@@ -125,7 +125,7 @@ PlayerSettings:
     16:10: 1
     16:9: 1
     Others: 1
-  bundleVersion: 0.4.2
+  bundleVersion: 0.5
   preloadedAssets:
   - {fileID: 0}
   - {fileID: 0}
@@ -177,7 +177,7 @@ PlayerSettings:
     Standalone: name.kanerogers.ChessTogether
   buildNumber:
     Standalone: 2
-  AndroidBundleVersionCode: 2
+  AndroidBundleVersionCode: 1
   AndroidMinSdkVersion: 25
   AndroidTargetSdkVersion: 0
   AndroidPreferredInstallLocation: 0

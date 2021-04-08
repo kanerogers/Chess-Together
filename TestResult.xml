@@ -1,48 +1,38 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-run id="0" runstate="Runnable" testcasecount="25" result="Failed" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.12.0.0" clr-version="4.0.30319.42000" start-time="2021-03-31 01:22:25Z" end-time="2021-03-31 01:22:33Z" duration="7.775476">
-  <command-line><![CDATA["C:\Program Files (x86)\NUnit.org\nunit-console\nunit3-console.exe" Tests.csproj --test=Tests.EnPassantBugTest.PGNTest]]></command-line>
+<test-run id="0" runstate="Runnable" testcasecount="1" result="Failed" label="Error" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.12.0.0" clr-version="4.0.30319.42000" start-time="2021-04-06 01:05:11Z" end-time="2021-04-06 01:05:12Z" duration="0.609467">
+  <command-line><![CDATA["C:\Program Files (x86)\NUnit.org\nunit-console\nunit3-console.exe" Tests.csproj --test=Tests.ReadAll]]></command-line>
   <filter>
-    <test>Tests.EnPassantBugTest.PGNTest</test>
+    <test>Tests.ReadAll</test>
   </filter>
-  <test-suite type="Project" id="1" name="Tests.csproj" fullname="C:\Users\kanem\Documents\Development\Games\Chess Together\Tests.csproj" runstate="Runnable" testcasecount="25" result="Failed" site="Child" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
-    <test-suite type="Assembly" id="3-1037" name="Tests.dll" fullname="C:\Users\kanem\Documents\Development\Games\Chess Together\Temp\bin\Debug\Tests.dll" runstate="Runnable" testcasecount="25" result="Failed" site="Child" start-time="2021-03-31 01:22:26Z" end-time="2021-03-31 01:22:33Z" duration="7.277635" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
-      <environment framework-version="3.5.0.0" clr-version="4.0.30319.42000" os-version="Microsoft Windows NT 10.0.19042.0" platform="Win32NT" cwd="C:\Users\kanem\Documents\Development\Games\Chess Together" machine-name="KANE-PC" user="kanem" user-domain="KANE-PC" culture="en-AU" uiculture="en-GB" os-architecture="x64" />
-      <settings>
-        <setting name="BasePath" value="C:\Users\kanem\Documents\Development\Games\Chess Together\Temp\bin\Debug\" />
-        <setting name="DisposeRunners" value="True" />
-        <setting name="WorkDirectory" value="C:\Users\kanem\Documents\Development\Games\Chess Together" />
-        <setting name="ActiveConfig" value="Debug" />
-        <setting name="ConfigNames" value="System.Collections.Generic.List`1[System.String]" />
-        <setting name="ImageRuntimeVersion" value="4.0.30319" />
-        <setting name="ImageTargetFrameworkName" value=".NETFramework,Version=v4.7.1" />
-        <setting name="ImageRequiresX86" value="False" />
-        <setting name="ImageRequiresDefaultAppDomainAssemblyResolver" value="False" />
-        <setting name="TargetRuntimeFramework" value="net-4.0" />
-        <setting name="NumberOfTestWorkers" value="16" />
-      </settings>
-      <properties>
-        <property name="_PID" value="23328" />
-        <property name="_APPDOMAIN" value="domain-3026b9a2-Tests.csproj" />
-      </properties>
+  <test-suite type="Project" id="1" name="Tests.csproj" fullname="C:\Users\kanem\Documents\Development\Games\Chess Together\Tests.csproj" runstate="Runnable" testcasecount="1" result="Failed" label="Error" site="Child" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <test-suite type="Assembly" id="1" name="Tests.csproj" fullname="C:\Users\kanem\Documents\Development\Games\Chess Together\Tests.csproj" runstate="NotRunnable" testcasecount="1" result="Failed" label="Error" start-time="2021-04-06 01:05:12Z" end-time="2021-04-06 01:05:12Z" duration="0.001" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
       <failure>
-        <message><![CDATA[One or more child tests had errors]]></message>
+        <message><![CDATA[NUnit.Engine.NUnitEngineException : The NUnit 3 driver encountered an error while executing reflected code.
+  ----> System.InvalidCastException : Unable to cast transparent proxy to type 'System.Web.UI.ICallbackEventHandler'.]]></message>
+        <stack-trace><![CDATA[--NUnitEngineException
+The NUnit 3 driver encountered an error while executing reflected code.
+
+Server stack trace: 
+   at NUnit.Engine.Drivers.NUnit3FrameworkDriver.CreateObject(String typeName, Object[] args)
+   at NUnit.Engine.Drivers.NUnit3FrameworkDriver.Load(String testAssemblyPath, IDictionary`2 settings)
+   at NUnit.Engine.Runners.DirectTestRunner.LoadDriver(IFrameworkDriver driver, String testFile, TestPackage subPackage)
+   at NUnit.Engine.Runners.DirectTestRunner.LoadPackage()
+   at NUnit.Engine.Runners.DirectTestRunner.EnsurePackageIsLoaded()
+   at NUnit.Engine.Runners.DirectTestRunner.RunTests(ITestEventListener listener, TestFilter filter)
+   at System.Runtime.Remoting.Messaging.StackBuilderSink._PrivateProcessMessage(IntPtr md, Object[] args, Object server, Object[]& outArgs)
+   at System.Runtime.Remoting.Messaging.StackBuilderSink.SyncProcessMessage(IMessage msg)
+
+Exception rethrown at [0]: 
+   at System.Runtime.Remoting.Proxies.RealProxy.HandleReturnMessage(IMessage reqMsg, IMessage retMsg)
+   at System.Runtime.Remoting.Proxies.RealProxy.PrivateInvoke(MessageData& msgData, Int32 type)
+   at NUnit.Engine.ITestEngineRunner.Run(ITestEventListener listener, TestFilter filter)
+   at NUnit.Engine.Runners.ProcessRunner.RunTests(ITestEventListener listener, TestFilter filter)
+--
+InvalidCastException
+Unable to cast transparent proxy to type 'System.Web.UI.ICallbackEventHandler'.
+   at NUnit.Framework.Api.FrameworkController.LoadTestsAction..ctor(FrameworkController controller, Object handler) in C:\code\nunit\src\NUnitFramework\framework\Api\FrameworkController.cs:line 490
+]]></stack-trace>
       </failure>
-      <test-suite type="TestSuite" id="3-1039" name="Tests" fullname="Tests" runstate="Runnable" testcasecount="25" result="Failed" site="Child" start-time="2021-03-31 01:22:26Z" end-time="2021-03-31 01:22:33Z" duration="7.247188" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
-        <failure>
-          <message><![CDATA[One or more child tests had errors]]></message>
-        </failure>
-        <test-suite type="TestFixture" id="3-1024" name="EnPassantBugTest" fullname="Tests.EnPassantBugTest" classname="Tests.EnPassantBugTest" runstate="Runnable" testcasecount="2" result="Failed" site="Child" start-time="2021-03-31 01:22:26Z" end-time="2021-03-31 01:22:33Z" duration="7.218048" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
-          <failure>
-            <message><![CDATA[One or more child tests had errors]]></message>
-          </failure>
-          <test-case id="3-1026" name="PGNTest" fullname="Tests.EnPassantBugTest.PGNTest" methodname="PGNTest" classname="Tests.EnPassantBugTest" runstate="Runnable" seed="10846637" result="Failed" label="Error" start-time="2021-03-31 01:22:26Z" end-time="2021-03-31 01:22:33Z" duration="7.198799" asserts="0">
-            <failure>
-              <message><![CDATA[System.Exception : Attempted to make invalid move 3,3 to 2,4 IsEnPassantCapture=True with board state 0, 0Black Rook at 0,0, 0, 3Black Queen at 0,3, 0, 5Black Rook at 0,5, 0, 6Black King at 0,6, 1, 5Black Pawn at 1,5, 2, 7Black Pawn at 2,7, 3, 0Black Pawn at 3,0, 3, 1Black Pawn at 3,1, 3, 3White Pawn at 3,3, 3, 4Black Pawn at 3,4, 4, 0White Pawn at 4,0, 4, 2White Pawn at 4,2, 4, 3White Rook at 4,3, 4, 5Black Pawn at 4,5, 4, 6Black Knight at 4,6, 5, 1White Pawn at 5,1, 5, 2White Knight at 5,2, 6, 5White Pawn at 6,5, 6, 6White Pawn at 6,6, 6, 7White Pawn at 6,7, 7, 0White Rook at 7,0, 7, 2White Queen at 7,2, 7, 6White King at 7,6, ]]></message>
-              <stack-trace><![CDATA[   at Tests.EnPassantBugTest.PGNTest() in C:\Users\kanem\Documents\Development\Games\Chess Together\Assets\Scripts\Tests\EnPassantBugTest.cs:line 45]]></stack-trace>
-            </failure>
-          </test-case>
-        </test-suite>
-      </test-suite>
     </test-suite>
   </test-suite>
 </test-run>

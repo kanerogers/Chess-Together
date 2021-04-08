@@ -109,7 +109,7 @@ public class King : ChessPiece {
         var p = pieces[Row, squareToCross];
 
         if (p != null) {
-            throw new Exception($"INVALID STATE: Found {p}. Attempted castle was {move}");
+            throw new ChessException($"INVALID STATE: Found {p}. Attempted castle was {move}");
         }
         pieces[Row, squareToCross] = this;
         Column = squareToCross;
@@ -122,7 +122,7 @@ public class King : ChessPiece {
         p = pieces[Row, destination];
 
         if (p != null) {
-            throw new Exception($"INVALID STATE: Found {p}");
+            throw new ChessException($"INVALID STATE: Found {p}");
         }
         pieces[Row, destination] = this;
         Column = destination;
@@ -135,7 +135,7 @@ public class King : ChessPiece {
         p = pieces[Row, destination];
 
         if (p != null) {
-            throw new Exception($"INVALID STATE: Found {p}");
+            throw new ChessException($"INVALID STATE: Found {p}");
         }
         Column = originalColumn;
 
