@@ -54,4 +54,5 @@
         "Temp/":true
     },
     "dotnet-test-explorer.testProjectPath": "./Tests.csproj",
+    "git.ignoreLimitWarning": true,
 }
