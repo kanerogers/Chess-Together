@@ -1,3 +1,24 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:1dfb5bda6792230077a39a7bba7db58d5a7018dbaf9e969746e6dbc5bfc30eb1
-size 655
+// This file was @generated with LibOVRPlatform/codegen/main. Do not modify it!
+
+namespace Oculus.Platform.Models
+{
+  using System;
+  using System.Collections;
+  using Oculus.Platform.Models;
+  using System.Collections.Generic;
+  using UnityEngine;
+
+  public class NetSyncSessionsChangedNotification
+  {
+    public readonly long ConnectionId;
+    public readonly NetSyncSessionList Sessions;
+
+
+    public NetSyncSessionsChangedNotification(IntPtr o)
+    {
+      ConnectionId = CAPI.ovr_NetSyncSessionsChangedNotification_GetConnectionId(o);
+      Sessions = new NetSyncSessionList(CAPI.ovr_NetSyncSessionsChangedNotification_GetSessions(o));
+    }
+  }
+
+}

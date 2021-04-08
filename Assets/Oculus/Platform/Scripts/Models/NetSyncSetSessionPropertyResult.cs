@@ -1,3 +1,22 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:8e1e2731d15079e547659a2aad0606aa84d104498bfeca049332d1fa06a63896
-size 511
+// This file was @generated with LibOVRPlatform/codegen/main. Do not modify it!
+
+namespace Oculus.Platform.Models
+{
+  using System;
+  using System.Collections;
+  using Oculus.Platform.Models;
+  using System.Collections.Generic;
+  using UnityEngine;
+
+  public class NetSyncSetSessionPropertyResult
+  {
+    public readonly NetSyncSession Session;
+
+
+    public NetSyncSetSessionPropertyResult(IntPtr o)
+    {
+      Session = new NetSyncSession(CAPI.ovr_NetSyncSetSessionPropertyResult_GetSession(o));
+    }
+  }
+
+}

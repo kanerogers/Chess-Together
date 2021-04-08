@@ -1,3 +1,22 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:e3fbdb8c29e5a0516c52eb4f877cfb0d0f7000113ad67c00e7c6f4abdbeaca0f
-size 423
+// This file was @generated with LibOVRPlatform/codegen/main. Do not modify it!
+
+namespace Oculus.Platform.Models
+{
+  using System;
+  using System.Collections;
+  using Oculus.Platform.Models;
+  using System.Collections.Generic;
+  using UnityEngine;
+
+  public class Leaderboard
+  {
+    public readonly string ApiName;
+
+
+    public Leaderboard(IntPtr o)
+    {
+      ApiName = CAPI.ovr_Leaderboard_GetApiName(o);
+    }
+  }
+
+}

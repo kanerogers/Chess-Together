@@ -1,3 +1,15 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:552044a91b2570216ce46441bc6dcb105d81a63244673f1107031b839e2ef8a7
-size 343
+{
+    "name": "SimpleFirebaseUnity",
+    "references": [
+        ""
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

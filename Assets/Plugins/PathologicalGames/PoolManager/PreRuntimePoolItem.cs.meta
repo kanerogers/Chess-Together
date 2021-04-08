@@ -1,3 +1,17 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:a06c0ed6c9dc26c45e9e17f69f5995a1a19676739405063231169730b3dc1fbd
-size 289
+fileFormatVersion: 2
+guid: f7f8122fb13d0924299c18dd794d211e
+labels:
+- Spawn
+- Manager
+- Preload
+- Pool
+- Instance
+- Performance
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
