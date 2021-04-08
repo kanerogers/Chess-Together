@@ -87,6 +87,11 @@ namespace IntegrationTests {
                     yield return null;
                 }
 
+                var whiteState = logicBoard.State[ChessPiece.EColour.White];
+                if (whiteState == ChessBoard.BoardStatus.Checkmate || whiteState == ChessBoard.BoardStatus.Stalemate) {
+                    Assert.Pass($"Game completed successfully");
+                }
+
                 try {
                     nextMove = AIManager.GetMove(logicBoard, ChessPiece.EColour.White, AIManager.MoveType.Standard);
                 } catch (System.Exception e) {
@@ -106,11 +111,11 @@ namespace IntegrationTests {
                 Assert.AreEqual(toRow, piece.Row);
                 Assert.AreEqual(toColumn, piece.Column);
 
-                var whiteState = logicBoard.State[ChessPiece.EColour.White];
                 var blackState = logicBoard.State[ChessPiece.EColour.Black];
-                if (whiteState == ChessBoard.BoardStatus.Checkmate || blackState == ChessBoard.BoardStatus.Checkmate || whiteState == ChessBoard.BoardStatus.Stalemate || blackState == ChessBoard.BoardStatus.Stalemate) {
+                if (blackState == ChessBoard.BoardStatus.Checkmate || blackState == ChessBoard.BoardStatus.Stalemate) {
                     Assert.Pass($"Game completed successfully");
                 }
+
             }
 
         }
