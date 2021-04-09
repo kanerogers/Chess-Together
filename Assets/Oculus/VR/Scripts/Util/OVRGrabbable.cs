@@ -18,8 +18,7 @@ using UnityEngine.Events;
 /// <summary>
 /// An object that can be grabbed and thrown by OVRGrabber.
 /// </summary>
-public class OVRGrabbable : MonoBehaviour
-{
+public class OVRGrabbable : MonoBehaviour {
     [SerializeField]
     protected bool m_allowOffhandGrab = true;
     [SerializeField]
@@ -43,80 +42,70 @@ public class OVRGrabbable : MonoBehaviour
     /// <summary>
     /// If true, the object can currently be grabbed.
     /// </summary>
-    public bool allowOffhandGrab
-    {
+    public bool allowOffhandGrab {
         get { return m_allowOffhandGrab; }
     }
 
     /// <summary>
     /// If true, the object is currently grabbed.
     /// </summary>
-    public bool isGrabbed
-    {
+    public bool isGrabbed {
         get { return m_grabbedBy != null; }
     }
 
     /// <summary>
     /// If true, the object's position will snap to match snapOffset when grabbed.
     /// </summary>
-    public bool snapPosition
-    {
+    public bool snapPosition {
         get { return m_snapPosition; }
     }
 
     /// <summary>
     /// If true, the object's orientation will snap to match snapOffset when grabbed.
     /// </summary>
-    public bool snapOrientation
-    {
+    public bool snapOrientation {
         get { return m_snapOrientation; }
     }
 
     /// <summary>
     /// An offset relative to the OVRGrabber where this object can snap when grabbed.
     /// </summary>
-    public Transform snapOffset
-    {
+    public Transform snapOffset {
         get { return m_snapOffset; }
     }
 
     /// <summary>
     /// Returns the OVRGrabber currently grabbing this object.
     /// </summary>
-    public OVRGrabber grabbedBy
-    {
+    public OVRGrabber grabbedBy {
         get { return m_grabbedBy; }
     }
 
     /// <summary>
     /// The transform at which this object was grabbed.
     /// </summary>
-    public Transform grabbedTransform
-    {
+    public Transform grabbedTransform {
         get { return m_grabbedCollider.transform; }
     }
 
     /// <summary>
     /// The Rigidbody of the collider that was used to grab this object.
     /// </summary>
-    public Rigidbody grabbedRigidbody
-    {
+    public Rigidbody grabbedRigidbody {
         get { return m_grabbedCollider.attachedRigidbody; }
     }
 
     /// <summary>
     /// The contact point(s) where the object was grabbed.
     /// </summary>
-    public Collider[] grabPoints
-    {
+    public Collider[] grabPoints {
         get { return m_grabPoints; }
     }
 
     /// <summary>
     /// Notifies the object that it has been grabbed.
     /// </summary>
-    virtual public void GrabBegin(OVRGrabber hand, Collider grabPoint)
-    {
+    virtual public void GrabBegin(OVRGrabber hand, Collider grabPoint) {
         m_grabbedBy = hand;
         m_grabbedCollider = grabPoint;
         gameObject.GetComponent<Rigidbody>().isKinematic = true;
@@ -126,8 +115,7 @@ public class OVRGrabbable : MonoBehaviour
     /// <summary>
     /// Notifies the object that it has been released.
     /// </summary>
-    virtual public void GrabEnd(Vector3 linearVelocity, Vector3 angularVelocity)
-    {
+    virtual public void GrabEnd(Vector3 linearVelocity, Vector3 angularVelocity) {
         Rigidbody rb = gameObject.GetComponent<Rigidbody>();
         rb.isKinematic = m_grabbedKinematic;
         rb.velocity = linearVelocity;
@@ -137,14 +125,11 @@ public class OVRGrabbable : MonoBehaviour
         OnRelease.Invoke(null);
     }
 
-    void Awake()
-    {
-        if (m_grabPoints.Length == 0)
-        {
+    void Awake() {
+        if (m_grabPoints.Length == 0) {
             // Get the collider from the grabbable
             Collider collider = this.GetComponent<Collider>();
-            if (collider == null)
-            {
+            if (collider == null) {
                 throw new ArgumentException("Grabbables cannot have zero grab points and no collider -- please add a grab point or collider.");
             }
 
@@ -153,15 +138,12 @@ public class OVRGrabbable : MonoBehaviour
         }
     }
 
-    protected virtual void Start()
-    {
+    protected virtual void Start() {
         m_grabbedKinematic = GetComponent<Rigidbody>().isKinematic;
     }
 
-    void OnDestroy()
-    {
-        if (m_grabbedBy != null)
-        {
+    void OnDestroy() {
+        if (m_grabbedBy != null) {
             // Notify the hand to release destroyed grabbables
             m_grabbedBy.ForceRelease(this);
         }
