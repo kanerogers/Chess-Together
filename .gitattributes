@@ -45,7 +45,6 @@
 *.tga filter=lfs diff=lfs merge=lfs -text
 *.tif filter=lfs diff=lfs merge=lfs -text
 *.tiff filter=lfs diff=lfs merge=lfs -text
-
 # Collapse Unity-generated files on GitHub
 *.asset linguist-generated
 *.mat linguist-generated
@@ -53,3 +52,5 @@
 *.prefab linguist-generated
 *.unity linguist-generated
 Assets/Oculus/Platform/Plugins/MacOSX/ovrplatform.bundle/Contents/MacOS/ovrplatform filter=lfs diff=lfs merge=lfs -text
+Assets/Oculus/LipSync/Plugins/MacOSX/OVRLipSync.bundle filter=lfs diff=lfs merge=lfs -text
+Assets/Oculus/LipSync/Plugins/iOS/libOVRLipSync.dylib filter=lfs diff=lfs merge=lfs -text
