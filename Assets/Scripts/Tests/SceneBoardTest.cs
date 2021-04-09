@@ -209,6 +209,7 @@ namespace IntegrationTests {
         public IEnumerator TestCastling() {
 
             var board = GetBoard();
+            int turnCompleteCount = 0;
             var moves = new Move[] {
                 new Move(6, 6, 4, 6),
                 new Move(1, 6, 3, 6),
@@ -217,7 +218,10 @@ namespace IntegrationTests {
                 new Move(7, 5, 6, 6),
                 new Move(0, 5, 1, 6),
                 new Move(7, 4, 7, 6),
+                new Move(0, 4, 0, 6),
             };
+
+            EventManager.MoveComplete += (ChessPiece.EColour _) => { turnCompleteCount += 1; };
 
             foreach (var move in moves) {
                 board.Move(move);
@@ -226,7 +230,16 @@ namespace IntegrationTests {
                 var piece = board.Pieces[toRow, toColumn];
                 var expectedPosition = board.CoordinatesForPosition(toRow, toColumn);
                 Assert.AreEqual(expectedPosition, piece.transform.localPosition);
+                if (move.IsCastling) {
+                    var expectedRookColumn = 6;
+                    var rook = board.Pieces[toRow, expectedRookColumn];
+                    var expectedRookPosition = board.CoordinatesForPosition(toRow, expectedRookColumn);
+                    Assert.AreEqual(expectedPosition, piece.transform.localPosition);
+                    Assert.AreEqual(ChessPiece.EName.Rook, rook.GetComponent<SceneChessPiece>().Piece.Name);
+                }
             }
+
+            Assert.AreEqual(8, turnCompleteCount);
         }
 
         [UnityTest]
