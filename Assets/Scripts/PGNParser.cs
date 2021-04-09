@@ -9,6 +9,10 @@ public class PGNParser {
         Board = new ChessBoard();
     }
 
+    public PGNParser() {
+        Board = new ChessBoard();
+    }
+
     static char BISHOP = 'B';
     static char KING = 'K';
     static char QUEEN = 'Q';
@@ -43,10 +47,16 @@ public class PGNParser {
     static Regex scoreRegex = new Regex(@"\d\-\d", RegexOptions.Compiled);
     int lineNumber = 0;
 
-    public List<List<Move>> Parse(int numGames = 0) {
-        var inHeader = true;
-        var games = new List<List<Move>>();
+    public List<Move> ParseSingleLine(string line) {
         var moves = new List<Move>();
+        parseLine(line, moves);
+        return moves;
+    }
+
+    public List<List<Move>> Parse(int numGames = 0) {
+        var inHeader = false;
+        var games = new List<List<Move>>();
+        List<Move> moves = null;
 
         // First, we need to skip through the header stuff and get to the moves.
         while (true) {
@@ -60,10 +70,18 @@ public class PGNParser {
                 if (inHeader) continue;
                 else {
                     inHeader = true;
-                    if (numGames != 0 && games.Count >= numGames) break;
+                    if (numGames != 0 && games.Count >= numGames) {
+                        break;
+                    }
                     Board = new ChessBoard();
-                    games.Add(moves);
+                    // Add previous list
+                    if (moves != null) games.Add(moves);
+
+                    // Create a new one
                     moves = new List<Move>();
+
+                    // Add the new one in
+                    games.Add(moves);
                 }
             } else {
                 inHeader = false;
@@ -112,8 +130,10 @@ public class PGNParser {
             var m = line.Substring(i, (l - i));
             var split = m.Split(' ');
             var whiteMoveString = split[0];
-            string blackMoveString;
-            blackMoveString = split[1];
+            string blackMoveString = "";
+            if (split.Length == 2) {
+                blackMoveString = split[1];
+            }
 
             var whiteMove = parseMoveString(whiteMoveString, ChessPiece.EColour.White);
             // Logger.Log("PGN", $"{whiteMoveString} is {whiteMove}");

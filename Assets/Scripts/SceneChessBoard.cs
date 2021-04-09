@@ -86,7 +86,7 @@ public class SceneChessBoard : MonoBehaviour {
         // Will take care of all business logic.
         if (!LogicBoard.Move(move)) return false;
         if (move.IsCastling) {
-            MoveCastle(scenePiece, toRow, toColumn);
+            MoveCastle(scenePiece, move);
             return true;
         }
 
@@ -95,6 +95,11 @@ public class SceneChessBoard : MonoBehaviour {
 
         var otherPiece = Pieces[toRow, toColumn];
         if (otherPiece) {
+            if (otherPiece.GetComponent<SceneChessPiece>().Piece.Colour == scenePiece.Piece.Colour) {
+                var pgn = PGNExporter.ToPGN(LogicBoard);
+                Debug.Log(pgn);
+                throw new ChessException("Can't remove a piece of the same colour!");
+            }
             StartCoroutine(RemovePiece(otherPiece.gameObject, scenePiece.MovementDuration));
         }
 
@@ -148,8 +153,8 @@ public class SceneChessBoard : MonoBehaviour {
         return (row, col);
     }
 
-    private void MoveCastle(SceneChessPiece king, int toRow, int toColumn) {
-        var (fromRow, fromColumn) = (king.Piece.Row, king.Piece.Column);
+    private void MoveCastle(SceneChessPiece king, Move move) {
+        var (fromRow, fromColumn, toRow, toColumn) = move.ToCoordinates();
         EventManager.DeselectedPiece(fromRow, fromColumn);
 
         var rookFromColumn = toColumn == 6 ? 7 : 0;

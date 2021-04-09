@@ -87,18 +87,29 @@ namespace IntegrationTests {
             EventManager.MoveComplete += (ChessPiece.EColour justMoved) => {
                 Debug.Log($"Just moved: {justMoved}");
                 if (justMoved.IsBlack()) {
-                    canMove = true;
                     var whiteState = logicBoard.State[ChessPiece.EColour.White];
                     if (whiteState == ChessBoard.BoardStatus.Checkmate || whiteState == ChessBoard.BoardStatus.Stalemate) {
                         finished = true;
                     }
+
+                    canMove = true;
                 }
             };
 
             while (!finished) {
                 while (!canMove) yield return null;
+                if (finished) yield break;
                 canMove = false;
-                yield return NextTurn(gameManager);
+                Move nextMove;
+                try {
+                    nextMove = AIManager.GetMove(logicBoard, ChessPiece.EColour.White, AIManager.MoveType.Standard);
+                } catch (System.Exception e) {
+                    var pgn = PGNExporter.ToPGN(logicBoard);
+                    Debug.Log(pgn);
+                    throw e;
+                }
+
+                yield return NextTurn(gameManager, nextMove);
 
                 var blackState = logicBoard.State[ChessPiece.EColour.Black];
                 if (blackState == ChessBoard.BoardStatus.Checkmate || blackState == ChessBoard.BoardStatus.Stalemate) {
@@ -107,20 +118,42 @@ namespace IntegrationTests {
             }
         }
 
+        [UnityTest]
+        [Timeout(100000000)]
+        public IEnumerator PGNGameTest() {
+            yield return LoadScene();
+            var gameManager = GetGameManager();
+            yield return StartAIGame(gameManager);
+            var sceneBoard = gameManager.SceneBoard;
+            gameManager.opponentType = GameManager.OpponentType.None;
 
-        private IEnumerator NextTurn(GameManager gameManager) {
+            var logicBoard = gameManager.LogicBoard;
+            bool canMove = true;
+            var parser = new PGNParser("Assets\\Scripts\\Tests\\test.pgn");
+            var games = parser.Parse(1);
+            var moves = games[0];
+            var turn = 0;
+
+            EventManager.MoveComplete += (ChessPiece.EColour justMoved) => {
+                turn += 1;
+                Debug.Log($"Just moved: {justMoved}");
+                canMove = true;
+            };
+
+            while (turn != moves.Count) {
+                while (!canMove) yield return null;
+                canMove = false;
+                var move = moves[turn];
+                yield return NextTurn(gameManager, move);
+            }
+        }
+
+
+        private IEnumerator NextTurn(GameManager gameManager, Move nextMove) {
             var logicBoard = gameManager.LogicBoard;
             var sceneBoard = gameManager.SceneBoard;
-            Move nextMove = null;
+            var canMove = logicBoard.CanMove;
 
-
-            try {
-                nextMove = AIManager.GetMove(logicBoard, ChessPiece.EColour.White, AIManager.MoveType.Standard);
-            } catch (System.Exception e) {
-                var pgn = PGNExporter.ToPGN(logicBoard);
-                Debug.Log(pgn);
-                throw e;
-            }
 
             Debug.Log($"[{logicBoard.Turn}] Making {nextMove}..");
             var (fromRow, fromColumn, toRow, toColumn) = nextMove.ToCoordinates();
@@ -129,7 +162,7 @@ namespace IntegrationTests {
             var piece = sceneBoard.Pieces[toRow, toColumn].GetComponent<SceneChessPiece>().Piece;
 
             Assert.AreEqual(expectedPieceName, piece.Name);
-            Assert.AreEqual(ChessPiece.EColour.White, piece.Colour);
+            Assert.AreEqual(canMove, piece.Colour);
             Assert.AreEqual(toRow, piece.Row);
             Assert.AreEqual(toColumn, piece.Column);
 
