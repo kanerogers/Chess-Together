@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace IntegrationTests {
     public class IntegrationTest {
@@ -79,44 +80,58 @@ namespace IntegrationTests {
             var openingMove = new Move(6, 0, 4, 0);
             yield return MovePiece(sceneBoard, openingMove);
             var logicBoard = gameManager.LogicBoard;
-            Move nextMove = null;
+            bool canMove = false;
+            bool finished = false;
 
-            while (true) {
-                // Wait for the AI to make its turn.
-                while (gameManager.CanMove != ChessPiece.EColour.White) {
-                    yield return null;
+
+            EventManager.MoveComplete += (ChessPiece.EColour justMoved) => {
+                Debug.Log($"Just moved: {justMoved}");
+                if (justMoved.IsBlack()) {
+                    canMove = true;
+                    var whiteState = logicBoard.State[ChessPiece.EColour.White];
+                    if (whiteState == ChessBoard.BoardStatus.Checkmate || whiteState == ChessBoard.BoardStatus.Stalemate) {
+                        finished = true;
+                    }
                 }
+            };
 
-                var whiteState = logicBoard.State[ChessPiece.EColour.White];
-                if (whiteState == ChessBoard.BoardStatus.Checkmate || whiteState == ChessBoard.BoardStatus.Stalemate) {
-                    Assert.Pass($"Game completed successfully");
-                }
-
-                try {
-                    nextMove = AIManager.GetMove(logicBoard, ChessPiece.EColour.White, AIManager.MoveType.Standard);
-                } catch (System.Exception e) {
-                    var pgn = PGNExporter.ToPGN(logicBoard);
-                    Debug.Log(pgn);
-                    throw e;
-                }
-
-                Debug.Log($"[{gameManager.Turn}] Making {nextMove}..");
-                var (fromRow, fromColumn, toRow, toColumn) = nextMove.ToCoordinates();
-                var expectedPieceName = sceneBoard.Pieces[fromRow, fromColumn].GetComponent<SceneChessPiece>().Piece.Name;
-                yield return MovePiece(sceneBoard, nextMove);
-                var piece = sceneBoard.Pieces[toRow, toColumn].GetComponent<SceneChessPiece>().Piece;
-
-                Assert.AreEqual(expectedPieceName, piece.Name);
-                Assert.AreEqual(ChessPiece.EColour.White, piece.Colour);
-                Assert.AreEqual(toRow, piece.Row);
-                Assert.AreEqual(toColumn, piece.Column);
+            while (!finished) {
+                while (!canMove) yield return null;
+                canMove = false;
+                yield return NextTurn(gameManager);
 
                 var blackState = logicBoard.State[ChessPiece.EColour.Black];
                 if (blackState == ChessBoard.BoardStatus.Checkmate || blackState == ChessBoard.BoardStatus.Stalemate) {
-                    Assert.Pass($"Game completed successfully");
+                    finished = true;
                 }
-
             }
+        }
+
+
+        private IEnumerator NextTurn(GameManager gameManager) {
+            var logicBoard = gameManager.LogicBoard;
+            var sceneBoard = gameManager.SceneBoard;
+            Move nextMove = null;
+
+
+            try {
+                nextMove = AIManager.GetMove(logicBoard, ChessPiece.EColour.White, AIManager.MoveType.Standard);
+            } catch (System.Exception e) {
+                var pgn = PGNExporter.ToPGN(logicBoard);
+                Debug.Log(pgn);
+                throw e;
+            }
+
+            Debug.Log($"[{logicBoard.Turn}] Making {nextMove}..");
+            var (fromRow, fromColumn, toRow, toColumn) = nextMove.ToCoordinates();
+            var expectedPieceName = sceneBoard.Pieces[fromRow, fromColumn].GetComponent<SceneChessPiece>().Piece.Name;
+            yield return MovePiece(sceneBoard, nextMove);
+            var piece = sceneBoard.Pieces[toRow, toColumn].GetComponent<SceneChessPiece>().Piece;
+
+            Assert.AreEqual(expectedPieceName, piece.Name);
+            Assert.AreEqual(ChessPiece.EColour.White, piece.Colour);
+            Assert.AreEqual(toRow, piece.Row);
+            Assert.AreEqual(toColumn, piece.Column);
 
         }
     }

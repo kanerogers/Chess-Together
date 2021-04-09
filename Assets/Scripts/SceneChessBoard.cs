@@ -194,7 +194,7 @@ public class SceneChessBoard : MonoBehaviour {
         CreatePiece(promotedPiece);
 
         // And signal that a move has been completed.
-        EventManager.EndMove();
+        EventManager.EndMove(scenePiece.Piece.Colour);
 
         // ..and that should be that! Probably.
     }
