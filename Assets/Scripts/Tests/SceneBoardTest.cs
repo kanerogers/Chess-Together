@@ -243,6 +243,24 @@ namespace IntegrationTests {
         }
 
         [UnityTest]
+        public IEnumerator TestDisappearingKing() {
+            var board = GetBoard();
+            var badPGN = "1.g4 d5 2.Nf3 d4 3.Bh3 Qd5 4.O-O Qc4 5.Kg2 Nh6 6.Rg1 Bd7 7.Rf1 Bc8 8.Re1";
+            var moves = new PGNParser().ParseSingleLine(badPGN);
+
+            foreach (var move in moves) {
+                board.Move(move);
+                var (_, _, toRow, toColumn) = move.ToCoordinates();
+                yield return new WaitForSeconds(board.MovementDuration + 0.1f);
+                var piece = board.Pieces[toRow, toColumn];
+                var expectedPosition = board.CoordinatesForPosition(toRow, toColumn);
+                Assert.AreEqual(expectedPosition, piece.transform.localPosition);
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
         public IEnumerator TestPromotion() {
             var sceneBoard = GetBoard();
             var bi = sceneBoard.GetComponent<BoardInterfaceManager>();
