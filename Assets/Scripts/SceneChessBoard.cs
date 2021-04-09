@@ -167,7 +167,9 @@ public class SceneChessBoard : MonoBehaviour {
         king.Move(kingPosition);
 
         var rookPosition = CoordinatesForPosition(toRow, rookToColumn);
-        rook.Move(rookPosition);
+
+        // Tell the rook that this move is invalid so it doesn't trigger TurnComplete.
+        rook.Move(rookPosition, false);
     }
 
     public void SetUpBoard() {
