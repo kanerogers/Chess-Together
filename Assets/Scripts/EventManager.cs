@@ -1,6 +1,5 @@
-public static class EventManager
-{
-    public delegate void MoveCompleteHandler();
+public static class EventManager {
+    public delegate void MoveCompleteHandler(ChessPiece.EColour justMoved);
     public delegate void RowHandler(int row, int column);
     public static event MoveCompleteHandler MoveComplete;
     public static event RowHandler SquareHovered;
@@ -9,7 +8,10 @@ public static class EventManager
     public static event RowHandler PieceUnhovered;
     public static event RowHandler PieceSelected;
     public static event RowHandler PieceDeselected;
-    public static void EndMove() => MoveComplete?.Invoke();
+    public static void EndMove(ChessPiece.EColour justMoved) {
+        MoveComplete?.Invoke(justMoved);
+    }
+
     public static void HoveredOverSquare(int row, int column) => SquareHovered?.Invoke(row, column);
     public static void UnhoveredOverSquare(int row, int column) => SquareUnhovered?.Invoke(row, column);
     public static void HoveredOverPiece(int row, int column) => PieceHovered?.Invoke(row, column);

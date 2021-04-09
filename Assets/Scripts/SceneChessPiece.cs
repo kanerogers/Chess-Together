@@ -173,7 +173,7 @@ public class SceneChessPiece : MonoBehaviour {
         squareBeneath?.FlashOff();
 
         if (valid) {
-            EventManager.EndMove();
+            EventManager.EndMove(Piece.Colour);
         }
         squareBeneath = null;
     }

@@ -280,6 +280,9 @@ public class ChessBoard {
 
         var (fromRow, fromColumn, toRow, toColumn) = move.ToCoordinates();
         var piece = Pieces[fromRow, fromColumn];
+        if (piece == null) {
+            throw new ChessException("Impossible - this should have been checked already.");
+        }
 
         // If this was the first time the piece moved, set that flag on Move
         if (!piece.HasMoved) move.FirstMoved = true;
@@ -452,7 +455,9 @@ public class ChessBoard {
         // Logger.Log("BOARD STATE", $"Evlauting if {move} would put King in check.");
         var (fromRow, fromColumn, _, _) = move.ToCoordinates();
         var piece = Pieces[fromRow, fromColumn];
-        if (piece == null) throw new ChessException($"Error evaluating {move} - piece is null!");
+        if (piece == null) {
+            throw new ChessException($"Error evaluating {move} - piece is null!");
+        }
         var king = piece.Colour == ChessPiece.EColour.Black ? BlackKing : WhiteKing;
 
         if (!Move(move, false, false)) {
@@ -468,7 +473,9 @@ public class ChessBoard {
     private void PromotePiece(Move move) {
         var (fromRow, fromColumn, toRow, toColumn) = move.ToCoordinates();
         var pawn = Pieces[fromRow, fromColumn];
-        if (pawn == null) throw new ChessException($"Invalid promotion - no pawn found at {fromRow},{fromColumn}. Board state: {this}");
+        if (pawn == null) {
+            throw new ChessException($"Invalid promotion - no pawn found at {fromRow},{fromColumn}. Board state: {this}");
+        }
 
         // Kill the pawn.
         Pieces[fromRow, fromColumn] = null;
