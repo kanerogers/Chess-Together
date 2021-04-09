@@ -19,7 +19,6 @@ public class GameManager : MonoBehaviour {
     public SceneChessBoard SceneBoard;
     public ChessBoard LogicBoard;
     public OpponentType opponentType;
-    public ChessPiece.EColour CanMove;
     public int Turn;
     #endregion
 
@@ -47,7 +46,7 @@ public class GameManager : MonoBehaviour {
         Debug.Log("Start!");
         SetAppID();
         audioSource = GetComponent<AudioSource>();
-        EventManager.MoveComplete += () => { TurnComplete(); };
+        EventManager.MoveComplete += (ChessPiece.EColour justMoved) => { TurnComplete(); };
         playerId = SystemInfo.deviceUniqueIdentifier;
         SceneBoard.scale = 1;
         SceneBoard.GameManager = this;
@@ -66,7 +65,6 @@ public class GameManager : MonoBehaviour {
         opponentType = OpponentType.AI;
         Player = ChessPiece.EColour.White;
         Opponent = ChessPiece.EColour.Black;
-        CanMove = Player;
         StartGame();
     }
 
@@ -100,7 +98,7 @@ public class GameManager : MonoBehaviour {
     }
 
     public bool MyTurn(SceneChessPiece piece) {
-        return piece.Piece.Colour == CanMove;
+        return piece.Piece.Colour == LogicBoard.CanMove;
     }
 
     public void Reset() {
@@ -113,7 +111,6 @@ public class GameManager : MonoBehaviour {
     private void StartMultiplayerGame() {
         boardInterfaceManager.PlayingMultiplayerGame();
         opponentType = OpponentType.Human;
-        CanMove = ChessPiece.EColour.White;
         StartGame();
         StartListeningForMoves();
     }
@@ -131,7 +128,7 @@ public class GameManager : MonoBehaviour {
         SceneBoard.InitializeBoard(LogicBoard);
 
         // TODO: Use player name
-        var moveText = Player == CanMove ? "Your move" : "Waiting for your opponent";
+        var moveText = Player == LogicBoard.CanMove ? "Your move" : "Waiting for your opponent";
         boardInterfaceManager.SetText(moveText);
 
         // Because PoolManager re-uses game objects it's important to go through each piece and make sure
@@ -283,29 +280,29 @@ public class GameManager : MonoBehaviour {
     }
 
     void TurnComplete() {
+        var canMove = LogicBoard.CanMove;
         Debug.Log($"Turn complete");
-        if (opponentType == OpponentType.Human && CanMove == Player) {
+        if (opponentType == OpponentType.Human && canMove == Player) {
             PushMoveToFirebase();
         }
 
         Turn++;
 
-        ToggleCanMove();
         SelectedPiece?.ToggleSelected(false);
-        var state = LogicBoard.State[CanMove];
+        var state = LogicBoard.State[canMove];
 
         if (state == ChessBoard.BoardStatus.Check) {
-            boardInterfaceManager.SetText($"{CanMove} is in check");
+            boardInterfaceManager.SetText($"{canMove} is in check");
         } else if (state == ChessBoard.BoardStatus.Checkmate || state == ChessBoard.BoardStatus.Stalemate) {
             EndGame(state);
             return;
         } else {
-            boardInterfaceManager.SetText($"{CanMove}'s turn.");
+            boardInterfaceManager.SetText($"{canMove}'s turn.");
         }
 
         SelectedPiece = null;
 
-        if (CanMove == Opponent && opponentType == OpponentType.AI) AITurn();
+        if (canMove == Opponent && opponentType == OpponentType.AI) AITurn();
     }
 
     private void PushMoveToFirebase() {
@@ -333,7 +330,7 @@ public class GameManager : MonoBehaviour {
     void EndGame(ChessBoard.BoardStatus state) {
         string message;
         if (state == ChessBoard.BoardStatus.Checkmate) {
-            var winner = CanMove.Inverse();
+            var winner = LogicBoard.CanMove.Inverse();
             if (winner == Player) message = "Checkmate! You win!";
             else message = "Checkmate! Your opponent won.";
         } else {
@@ -349,15 +346,6 @@ public class GameManager : MonoBehaviour {
         if (colour == Player) return "You";
         if (opponentType == OpponentType.AI) return "AI";
         return "Your opponent";
-    }
-
-    void ToggleCanMove() {
-        if (CanMove == ChessPiece.EColour.Black) {
-            CanMove = ChessPiece.EColour.White;
-        } else {
-            CanMove = ChessPiece.EColour.Black;
-        }
-
     }
 
     #region Oculus

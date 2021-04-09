@@ -154,7 +154,7 @@ public static class AIManager {
         // Logger.Log("AI", $"AI Manager evaluating {move}");
         // There's no need to check the state or if the king is in check because we've done that already - we're evaluating a *proven valid* move.
         if (!board.Move(move, checkIfKingIsInCheck: false, checkStateAfterMove: false)) {
-            throw new System.Exception($"Attempted to make invalid move {move} with board state {board}");
+            throw new ChessException($"Attempted to make invalid move {move} with board state {board}");
         }
 
         var ourState = board.State[us];
