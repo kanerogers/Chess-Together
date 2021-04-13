@@ -227,7 +227,6 @@ public class BoardInterfaceManager : MonoBehaviour {
         textToBeTyped = text;
         for (int i = 1; i < text.Length; i++) {
             if (textToBeTyped != text) {
-                Debug.Log($"Text to write was {text} but textToBeTyped is {textToBeTyped} - stopping.. ");
                 yield break;
             };
             var s = text.Substring(0, i);

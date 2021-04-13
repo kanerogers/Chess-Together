@@ -16,6 +16,7 @@ public class Move : IEquatable<Move> {
     public ChessPiece.EName PieceToPromoteTo;
     public (Pawn, Pawn) PreviousEnPassantState;
     static StringBuilder sb = new StringBuilder();
+    public Pawn PawnThatWasPromoted;
 
     public Move(int fromRow, int fromColumn, int toRow, int toColumn) {
         FromRow = fromRow;

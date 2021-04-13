@@ -477,6 +477,9 @@ public class ChessBoard {
             throw new ChessException($"Invalid promotion - no pawn found at {fromRow},{fromColumn}. Board state: {this}");
         }
 
+        // Stash the pawn away
+        move.PawnThatWasPromoted = (Pawn)pawn;
+
         // Kill the pawn.
         Pieces[fromRow, fromColumn] = null;
 
@@ -590,8 +593,8 @@ public class ChessBoard {
         // Grab the promotion piece
         var promotionPiece = Pieces[toRow, toColumn];
 
-        // Create a new pawn to replace the one that was promoted.
-        var pawn = new Pawn(promotionPiece.Colour, fromRow, fromColumn);
+        // Get the pawn that was removed
+        var pawn = lastMove.PawnThatWasPromoted;
 
         // Replace the promotion piece.
         Pieces[toRow, toColumn] = removedPiece;
