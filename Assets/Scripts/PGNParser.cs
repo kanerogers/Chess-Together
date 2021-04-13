@@ -56,7 +56,7 @@ public class PGNParser {
     public List<List<Move>> Parse(int numGames = 0) {
         var inHeader = false;
         var games = new List<List<Move>>();
-        List<Move> moves = null;
+        var moves = new List<Move>();
 
         // First, we need to skip through the header stuff and get to the moves.
         while (true) {
@@ -75,13 +75,10 @@ public class PGNParser {
                     }
                     Board = new ChessBoard();
                     // Add previous list
-                    if (moves != null) games.Add(moves);
+                    games.Add(moves);
 
                     // Create a new one
                     moves = new List<Move>();
-
-                    // Add the new one in
-                    games.Add(moves);
                 }
             } else {
                 inHeader = false;

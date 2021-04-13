@@ -11,7 +11,7 @@ public static class AIManager {
     static int CHECKMATE_MOVE = 100;
     static int CHECK_MOVE = 10;
     static int MINMAX_DEPTH = 3;
-    public static Move GetMove(ChessBoard board, ChessPiece.EColour AI, MoveType moveType) {
+    public static Move GetMove(ChessBoard board, ChessPiece.EColour AI, MoveType moveType = MoveType.Standard) {
         if (moveType == MoveType.Opening) return GetOpeningMove(AI);
         if (moveType == MoveType.Defence) return GetDefenceMove(AI);
 
@@ -25,12 +25,6 @@ public static class AIManager {
 
         foreach (Move move in validMoves) {
             int depthReached;
-            // if (ind == 21) Logger.AT_CORRECT_MOVE = true;
-            // else Logger.AT_CORRECT_MOVE = false;
-            if (Logger.AT_CORRECT_MOVE && ind == 17) {
-                Logger.SPECIAL_DEBUG = true;
-            }
-
             (move.Score, depthReached) = MinMax(board, move, AI, AI.Inverse(), AI, MINMAX_DEPTH);
 
 

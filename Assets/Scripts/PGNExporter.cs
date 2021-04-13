@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 public static class PGNExporter {
     // Exports a *single* game to a PGN formatted string
@@ -7,16 +8,14 @@ public static class PGNExporter {
         var turn = 0;
         var sb = new StringBuilder();
         var canMove = ChessPiece.EColour.White;
-        var moveStack = new Stack<(Move, bool)>();
+        var moveStack = new Stack<(Move, ChessPiece)>(new Stack<(Move, ChessPiece)>(board.UndoStack));
+        var moveList = moveStack.ToList();
 
-        while (board.UndoStack.Count != 0) {
-            var (move, capturedPiece) = board.UndoStack.Peek();
+        moveList.Reverse();
+        board = new ChessBoard();
+
+        foreach (var (move, capturedPiece) in moveList) {
             var isCapture = capturedPiece != null;
-            moveStack.Push((move, isCapture));
-            board.Undo();
-        }
-
-        foreach (var (move, isCapture) in moveStack) {
             if (canMove == ChessPiece.EColour.White) {
                 turn++;
                 sb.Append(turn);

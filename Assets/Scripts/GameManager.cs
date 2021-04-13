@@ -43,7 +43,7 @@ public class GameManager : MonoBehaviour {
 
     #region Unity Lifecycle
     void Start() {
-        Debug.Log("Start!");
+        Logger.Log("Start!");
         SetAppID();
         audioSource = GetComponent<AudioSource>();
         EventManager.MoveComplete += (ChessPiece.EColour justMoved) => { TurnComplete(); };
@@ -135,23 +135,22 @@ public class GameManager : MonoBehaviour {
         // it's been configured correctly.
         foreach (var p in SceneBoard.Pieces) {
             if (!p) continue;
-            var piece = p.GetComponent<SceneChessPiece>();
-            if (piece.Piece.Colour == Opponent) {
+            if (p.Piece.Colour == Opponent) {
                 var grabbable = p.GetComponent<OVRGrabbable>();
                 if (grabbable) {
                     grabbable.enabled = false;
                 } else {
-                    Debug.Log($"No Grabbable found on {piece}");
+                    Debug.Log($"No Grabbable found on {p}");
                 }
-                piece.HumanControlled = false;
+                p.HumanControlled = false;
             } else {
                 var grabbable = p.GetComponent<OVRGrabbable>();
                 if (grabbable) {
                     grabbable.enabled = true;
                 } else {
-                    Debug.Log($"No Grabbable found on {piece}");
+                    Debug.Log($"No Grabbable found on {p}");
                 }
-                piece.HumanControlled = true;
+                p.HumanControlled = true;
             }
         }
     }
@@ -281,7 +280,6 @@ public class GameManager : MonoBehaviour {
 
     void TurnComplete() {
         var canMove = LogicBoard.CanMove;
-        Debug.Log($"Turn complete");
         if (opponentType == OpponentType.Human && canMove == Player) {
             PushMoveToFirebase();
         }
@@ -302,6 +300,7 @@ public class GameManager : MonoBehaviour {
 
         SelectedPiece = null;
 
+
         if (canMove == Opponent && opponentType == OpponentType.AI) AITurn();
     }
 
@@ -321,7 +320,9 @@ public class GameManager : MonoBehaviour {
         });
 
         Debug.Log($"[AI] AI has decided to move {move}");
-        SceneBoard.Move(move);
+        if (!SceneBoard.Move(move)) {
+            throw new ChessException($"AI attempted to make invalid move {move}");
+        }
 
         AIMoveType = AIManager.MoveType.Standard;
     }

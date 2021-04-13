@@ -50,9 +50,9 @@ namespace IntegrationTests {
                     gameIndex += 1;
                 }
             } catch (System.Exception e) {
-                Debug.Log($"Encountered error at game {gameIndex}");
-                Debug.LogError(e.ToString());
-                Debug.LogError(PGNExporter.ToPGN(board));
+                Logger.Log($"Encountered error at game {gameIndex}");
+                Logger.LogError(e.ToString());
+                Logger.LogError(PGNExporter.ToPGN(board));
                 throw e;
             }
         }

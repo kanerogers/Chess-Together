@@ -14,7 +14,7 @@ public class SceneChessBoard : MonoBehaviour {
     public GameObject SquarePrefab;
     public Material Black;
     public Material White;
-    public GameObject[,] Pieces = new GameObject[8, 8];
+    public SceneChessPiece[,] Pieces = new SceneChessPiece[8, 8];
     public ChessBoard LogicBoard;
     public GameManager GameManager;
     public bool bigPieces = false;
@@ -28,7 +28,7 @@ public class SceneChessBoard : MonoBehaviour {
     public SceneChessPiece knightPrefab;
     public BoardInterfaceManager boardInterfaceManager;
     bool initialized = false;
-    (SceneChessPiece, int, int) promotionData = (null, 0, 0);
+    Move promotionMove = null;
     GameObject[] Squares = new GameObject[64];
 
     public void InitializeBoard(ChessBoard board) {
@@ -56,22 +56,28 @@ public class SceneChessBoard : MonoBehaviour {
 
     public void DestroyBoard() {
         foreach (var piece in Pieces) {
-            if (!piece || !piece.activeSelf) continue;
+            if (!piece || !piece.gameObject.activeSelf) continue;
             PoolManager.Pools[POOL_NAME].Despawn(piece.transform);
         }
-        Pieces = new GameObject[8, 8];
+        Pieces = new SceneChessPiece[8, 8];
     }
 
     // Move a piece to some arbitrary place on the board
     public bool Move(SceneChessPiece scenePiece, int toRow, int toColumn) {
         var fromRow = scenePiece.Piece.Row;
         var fromColumn = scenePiece.Piece.Column;
+        var move = new Move(fromRow, fromColumn, toRow, toColumn);
+        return Move(scenePiece, move);
+    }
+
+    public bool Move(SceneChessPiece scenePiece, Move move) {
+        var (fromRow, fromColumn, toRow, toColumn) = move.ToCoordinates();
 
         // If this move is a promotion we need to do some special handling.
         if (scenePiece.Piece.Name == ChessPiece.EName.Pawn) {
             var pawn = (Pawn)scenePiece.Piece;
             if (pawn.IsPromotion(toRow, toColumn)) {
-                promotionData = (scenePiece, toRow, toColumn);
+                promotionMove = move;
                 var p = CoordinatesForPosition(toRow, toColumn);
                 scenePiece.Move(p, false); // move the piece to the end row while we choose the promotion piece
                 // necessary to pass false here to not trigger MoveCompleted.
@@ -81,7 +87,6 @@ public class SceneChessBoard : MonoBehaviour {
             }
         }
 
-        var move = new Move(fromRow, fromColumn, toRow, toColumn);
 
         // Will take care of all business logic.
         if (!LogicBoard.Move(move)) return false;
@@ -93,19 +98,42 @@ public class SceneChessBoard : MonoBehaviour {
         // This move is valid. Proceed!
         EventManager.DeselectedPiece(fromRow, fromColumn);
 
-        var otherPiece = Pieces[toRow, toColumn];
-        if (otherPiece) {
-            if (otherPiece.GetComponent<SceneChessPiece>().Piece.Colour == scenePiece.Piece.Colour) {
+        var removedPiece = getRemovedPiece(move);
+        if (removedPiece) {
+            if (removedPiece.Piece.Colour == scenePiece.Piece.Colour) {
                 var pgn = PGNExporter.ToPGN(LogicBoard);
-                Debug.Log(pgn);
-                throw new ChessException("Can't remove a piece of the same colour!");
+                Logger.Log(pgn);
+                throw new ChessException($"{move} is invalid! Can't remove a piece of the same colour!");
             }
-            StartCoroutine(RemovePiece(otherPiece.gameObject, scenePiece.MovementDuration));
+            StartCoroutine(RemovePiece(removedPiece.gameObject, scenePiece.MovementDuration));
         }
 
         // Update our internal bookkeeping
         Pieces[fromRow, fromColumn] = null;
-        Pieces[toRow, toColumn] = scenePiece.gameObject;
+        Pieces[toRow, toColumn] = scenePiece;
+
+        for (int r = 0; r != 8; r++) {
+            for (int c = 0; c != 8; c++) {
+                var sp = Pieces[r, c];
+                if (sp == null) continue;
+                var piece = sp.Piece;
+
+                if (piece.Row != r || piece.Column != c) {
+                    // This piece has fallen out of sync. This can happen because the AI may make moves that result
+                    // in the creation/destruction of pieces. In this case, we'll just look to the LogicBoard as the source
+                    // of truth.
+                    var logicBoardPiece = LogicBoard.Pieces[r, c];
+                    if (logicBoardPiece.Name != piece.Name || logicBoardPiece.Colour != piece.Colour) {
+                        throw new ChessException($"Invalid state! {logicBoardPiece} != {piece}");
+                    }
+                    sp.Piece = logicBoardPiece;
+                }
+
+                if (LogicBoard.Pieces[r, c] == null) {
+                    throw new ChessException($"{piece} has been removed but we are still holding a reference to it!");
+                }
+            }
+        }
 
         // Move the piece in the Scene
         var position = CoordinatesForPosition(toRow, toColumn);
@@ -128,15 +156,34 @@ public class SceneChessBoard : MonoBehaviour {
 
     // Make a move generated by the AI
     public bool Move(Move move) {
-        var obj = Pieces[move.FromRow, move.FromColumn];
-        if (!obj) {
+        var (fromRow, fromColumn, toRow, toColumn) = move.ToCoordinates();
+        var scenePiece = Pieces[fromRow, fromColumn];
+        if (!scenePiece) {
             var pgn = PGNExporter.ToPGN(LogicBoard);
-            Debug.LogError(pgn);
+            Logger.LogError(pgn);
             throw new ChessException($"No piece found at {move.FromRow},{move.FromColumn}");
         }
 
-        var scenePiece = obj.GetComponent<SceneChessPiece>();
-        return Move(scenePiece, move.ToRow, move.ToColumn);
+        if (move.IsPromotion()) {
+            StartCoroutine(AIPromotion(scenePiece, move));
+            return true;
+        }
+
+        if (!Move(scenePiece, move)) {
+            throw new ChessException($"Move {move} is invalid!");
+        }
+
+        return true;
+    }
+
+    private IEnumerator AIPromotion(SceneChessPiece scenePiece, Move move) {
+        promotionMove = move;
+        var p = CoordinatesForPosition(move.ToRow, move.ToColumn);
+        scenePiece.Move(p, false); // move the piece to the end row while we choose the promotion piece
+        yield return new WaitForSeconds(MovementDuration + 0.1f);
+
+        PromotePawnTo(move.PieceToPromoteTo);
+        yield return null;
     }
 
     public Vector3 CoordinatesForPosition(int toRow, int toColumn) {
@@ -159,13 +206,20 @@ public class SceneChessBoard : MonoBehaviour {
 
         var rookFromColumn = toColumn == 6 ? 7 : 0;
         var rookToColumn = toColumn == 6 ? 5 : 3;
-        var rook = Pieces[toRow, rookFromColumn].GetComponent<SceneChessPiece>();
+
+        // Grab the rook
+        var rook = Pieces[toRow, rookFromColumn];
 
         // Update our internal bookkeeping
+
+        // Clear the King
         Pieces[fromRow, fromColumn] = null;
 
-        Pieces[fromRow, toColumn] = king.gameObject;
-        Pieces[fromRow, rookToColumn] = rook.gameObject;
+        // Clear the rook
+        Pieces[fromRow, rookFromColumn] = null;
+
+        Pieces[fromRow, toColumn] = king;
+        Pieces[fromRow, rookToColumn] = rook;
 
         // Move the piece in the Scene
         var kingPosition = CoordinatesForPosition(toRow, toColumn);
@@ -184,19 +238,25 @@ public class SceneChessBoard : MonoBehaviour {
         }
     }
 
-    public void PromotePawnTo(ChessPiece.EName name) {
+    public void PromotePawnTo(ChessPiece.EName pieceToPromoteTo) {
         // First, tell the logic board what we're up to.
-        var (scenePiece, toRow, toColumn) = promotionData;
-        Debug.Log($"PROMOTING PAWN: {scenePiece.Piece}");
-        var (fromRow, fromColumn) = (scenePiece.Piece.Row, scenePiece.Piece.Column);
-        var move = new Move(fromRow, fromColumn, toRow, toColumn, name);
-        Debug.Log($"PROMOTION MOVE: {move}");
+        var move = promotionMove;
+        var (fromRow, fromColumn, toRow, toColumn) = move.ToCoordinates();
+        var scenePiece = Pieces[fromRow, fromColumn];
+
+        Logger.Log($"PROMOTING PAWN: {scenePiece.Piece}");
+        move.PieceToPromoteTo = pieceToPromoteTo;
+
+        Logger.Log($"PROMOTION MOVE: {move}");
         if (!LogicBoard.Move(move)) {
-            Debug.LogError($"Promotion invalid: {move}");
+            throw new ChessException($"Promotion invalid: {move}");
         }
 
         // Now replace the piece.
         PoolManager.Pools[POOL_NAME].Despawn(Pieces[fromRow, fromColumn].transform);
+
+        // Null out the reference
+        Pieces[fromRow, fromColumn] = null;
         var promotedPiece = LogicBoard.Pieces[toRow, toColumn];
         CreatePiece(promotedPiece);
 
@@ -262,7 +322,7 @@ public class SceneChessBoard : MonoBehaviour {
 
         renderer.material = material;
         sp.Piece = piece;
-        Pieces[row, column] = obj;
+        Pieces[row, column] = sp;
     }
 
     void CreateSquare(int row, int column) {
@@ -282,7 +342,7 @@ public class SceneChessBoard : MonoBehaviour {
     }
 
     IEnumerator RemovePiece(GameObject obj, float movementDuration) {
-        Debug.Log($"Removing {obj.GetComponent<SceneChessPiece>().Piece}");
+        Logger.Log($"Removing {obj.GetComponent<SceneChessPiece>().Piece}");
         yield return new WaitForSeconds(movementDuration);
         PoolManager.Pools[POOL_NAME].Despawn(obj.transform);
     }
@@ -292,5 +352,19 @@ public class SceneChessBoard : MonoBehaviour {
                 CreateSquare(row, column);
             }
         }
+    }
+
+    private SceneChessPiece getRemovedPiece(Move move) {
+        if (move.IsEnPassantCapture) {
+            var (_, removedPiece) = LogicBoard.UndoStack.Peek();
+            var (row, column) = (removedPiece.Row, removedPiece.Column);
+            var p = Pieces[row, column];
+
+            // We also need to set it the square to null, as the normal logic doesn't handle EnPassant captures.
+            Pieces[row, column] = null;
+            return p;
+        }
+
+        return Pieces[move.ToRow, move.ToColumn];
     }
 }
