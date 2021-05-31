@@ -51,6 +51,7 @@ public class GameManager : MonoBehaviour {
         SceneBoard.scale = 1;
         SceneBoard.GameManager = this;
         waitForAI = TimeSpan.FromSeconds(AIWaitTime);
+        OVRManager.gpuLevel = 3;
 
         if (!IsSideQuestBuild) OculusSetup();
     }
@@ -115,7 +116,7 @@ public class GameManager : MonoBehaviour {
         StartListeningForMoves();
     }
     private void StartGame() {
-        Avatar.SetActive(true);
+        // Avatar.SetActive(true);
         Turn = 0;
 
         if (Player == ChessPiece.EColour.White) {
